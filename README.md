@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # CommerceFlow v2 🛍️
 
 A modern, full-stack e-commerce application built with React, Express, Prisma, and PostgreSQL. Deployed seamlessly on Railway with a beautiful, responsive UI and comprehensive backend API.
@@ -308,3 +309,6 @@ If you encounter any issues or have questions:
 ---
 
 **Built with ❤️ for modern e-commerce** 
+=======
+# commerceFlow-v2
+>>>>>>> a7e26dcdcb983a22cf24942c9f9bf9444defe5c7
