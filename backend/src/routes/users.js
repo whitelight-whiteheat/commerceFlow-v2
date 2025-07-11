@@ -1,0 +1,202 @@
+import express from 'express';
+import { PrismaClient } from '@prisma/client';
+import { requireAdmin } from '../middleware/auth.js';
+
+const router = express.Router();
+const prisma = new PrismaClient();
+
+// Get all users (admin only)
+router.get('/', requireAdmin, async (req, res) => {
+  try {
+    const users = await prisma.user.findMany({
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        role: true,
+        createdAt: true,
+        _count: {
+          select: {
+            orders: true,
+            reviews: true
+          }
+        }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    const usersWithStats = users.map(user => ({
+      ...user,
+      orderCount: user._count.orders,
+      reviewCount: user._count.reviews,
+      _count: undefined
+    }));
+
+    res.json({ users: usersWithStats });
+  } catch (error) {
+    console.error('Get users error:', error);
+    res.status(500).json({ message: 'Failed to fetch users' });
+  }
+});
+
+// Get user by ID (admin only)
+router.get('/:id', requireAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const user = await prisma.user.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        role: true,
+        createdAt: true,
+        orders: {
+          select: {
+            id: true,
+            status: true,
+            total: true,
+            createdAt: true
+          },
+          orderBy: { createdAt: 'desc' }
+        },
+        reviews: {
+          select: {
+            id: true,
+            rating: true,
+            comment: true,
+            createdAt: true,
+            product: {
+              select: {
+                id: true,
+                name: true
+              }
+            }
+          },
+          orderBy: { createdAt: 'desc' }
+        },
+        _count: {
+          select: {
+            orders: true,
+            reviews: true
+          }
+        }
+      }
+    });
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const userWithStats = {
+      ...user,
+      orderCount: user._count.orders,
+      reviewCount: user._count.reviews,
+      _count: undefined
+    };
+
+    res.json({ user: userWithStats });
+  } catch (error) {
+    console.error('Get user error:', error);
+    res.status(500).json({ message: 'Failed to fetch user' });
+  }
+});
+
+// Update user role (admin only)
+router.put('/:id/role', requireAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { role } = req.body;
+
+    if (!['USER', 'ADMIN'].includes(role)) {
+      return res.status(400).json({ message: 'Invalid role' });
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id }
+    });
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const updatedUser = await prisma.user.update({
+      where: { id },
+      data: { role },
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        role: true,
+        createdAt: true
+      }
+    });
+
+    res.json({
+      message: 'User role updated successfully',
+      user: updatedUser
+    });
+  } catch (error) {
+    console.error('Update user role error:', error);
+    res.status(500).json({ message: 'Failed to update user role' });
+  }
+});
+
+// Get user statistics (for current user)
+router.get('/me/stats', async (req, res) => {
+  try {
+    const stats = await prisma.user.findUnique({
+      where: { id: req.user.id },
+      select: {
+        _count: {
+          select: {
+            orders: true,
+            reviews: true,
+            cartItems: true
+          }
+        },
+        orders: {
+          select: {
+            total: true,
+            status: true
+          }
+        }
+      }
+    });
+
+    if (!stats) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Calculate total spent
+    const totalSpent = stats.orders
+      .filter(order => order.status === 'DELIVERED')
+      .reduce((sum, order) => sum + order.total, 0);
+
+    // Calculate average order value
+    const completedOrders = stats.orders.filter(order => order.status === 'DELIVERED');
+    const averageOrderValue = completedOrders.length > 0 
+      ? totalSpent / completedOrders.length 
+      : 0;
+
+    const userStats = {
+      orderCount: stats._count.orders,
+      reviewCount: stats._count.reviews,
+      cartItemCount: stats._count.cartItems,
+      totalSpent,
+      averageOrderValue: Math.round(averageOrderValue * 100) / 100,
+      completedOrders: completedOrders.length
+    };
+
+    res.json({ stats: userStats });
+  } catch (error) {
+    console.error('Get user stats error:', error);
+    res.status(500).json({ message: 'Failed to fetch user statistics' });
+  }
+});
+
+export default router; 
