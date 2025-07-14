@@ -1,0 +1,13 @@
+# Prevent Docker detection
+Dockerfile
+.dockerignore
+docker-compose.yml
+docker-compose.yaml
+Dockerfile.*
+
+# Ignore development files
+node_modules/
+.git/
+.env.local
+.env.development
+*.log 
