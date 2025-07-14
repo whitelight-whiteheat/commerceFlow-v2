@@ -22,8 +22,23 @@ dotenv.config();
 
 const app = express();
 const prisma = new PrismaClient();
-const PORT = process.env.PORT || 5000;
 
+// CRITICAL FIX: Use Railway's injected port, no fallback
+const PORT = process.env.PORT;
+
+// Debug environment variables
+console.log('🔍 Environment Debug:');
+console.log('PORT:', PORT);
+console.log('NODE_ENV:', process.env.NODE_ENV);
+console.log('DATABASE_URL exists:', !!process.env.DATABASE_URL);
+console.log('JWT_SECRET exists:', !!process.env.JWT_SECRET);
+console.log('FRONTEND_URL:', process.env.FRONTEND_URL);
+
+if (!PORT) {
+  console.error('❌ PORT environment variable is required');
+  console.error('Available environment variables:', Object.keys(process.env));
+  process.exit(1);
+}
 
 // Rate limiting
 const limiter = rateLimit({
@@ -42,9 +57,27 @@ app.use(limiter);
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
-// Health check
+// Health check - CRITICAL for Railway
 app.get('/health', (req, res) => {
-  res.json({ status: 'OK', timestamp: new Date().toISOString() });
+  res.json({ 
+    status: 'OK', 
+    timestamp: new Date().toISOString(),
+    port: PORT,
+    environment: process.env.NODE_ENV || 'development',
+    database: !!process.env.DATABASE_URL,
+    jwt: !!process.env.JWT_SECRET
+  });
+});
+
+// Test database connection
+app.get('/test-db', async (req, res) => {
+  try {
+    await prisma.$connect();
+    res.json({ status: 'Database connected successfully' });
+  } catch (error) {
+    console.error('Database connection error:', error);
+    res.status(500).json({ error: 'Database connection failed', details: error.message });
+  }
 });
 
 // Routes
@@ -61,9 +94,12 @@ app.use(notFoundHandler);
 app.use(errorHandler);
 
 // Start server
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Server running on port ${PORT}`);
   console.log(`📊 Health check: http://localhost:${PORT}/health`);
+  console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`🔗 Database: ${process.env.DATABASE_URL ? 'Connected' : 'Missing DATABASE_URL'}`);
+  console.log(`🔐 JWT: ${process.env.JWT_SECRET ? 'Configured' : 'Missing JWT_SECRET'}`);
 });
 
 // Graceful shutdown
