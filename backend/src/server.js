@@ -16,7 +16,7 @@ import userRoutes from './routes/users.js';
 
 // Import middleware
 import { authenticateToken } from './middleware/auth.js';
-import { errorHandler } from './middleware/errorHandler.js';
+import { errorHandler, notFoundHandler } from './middleware/errorHandler.js';
 
 dotenv.config();
 
@@ -56,12 +56,8 @@ app.use('/api/reviews', reviewRoutes);
 app.use('/api/users', authenticateToken, userRoutes);
 
 // Error handling
+app.use(notFoundHandler);
 app.use(errorHandler);
-
-// 404 handler
-app.use('*', (req, res) => {
-  res.status(404).json({ message: 'Route not found' });
-});
 
 // Start server
 app.listen(PORT, () => {
