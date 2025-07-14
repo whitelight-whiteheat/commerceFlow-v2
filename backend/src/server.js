@@ -111,11 +111,12 @@ app.use(errorHandler);
 // Start server
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`📊 Health check: http://localhost:${PORT}/health`);
+  console.log(`📊 Health check: https://commerceflow-v2-production.up.railway.app/health`);
   console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log(`🔗 Database: ${process.env.DATABASE_URL ? 'Connected' : 'Missing DATABASE_URL'}`);
   console.log(`🔐 JWT: ${process.env.JWT_SECRET ? 'Configured' : 'Missing JWT_SECRET'}`);
-  console.log(`🎯 Root endpoint: http://localhost:${PORT}/`);
+  console.log(`🎯 Root endpoint: https://commerceflow-v2-production.up.railway.app/`);
+  console.log(`🔌 API endpoints: https://commerceflow-v2-production.up.railway.app/api/`);
 });
 
 // Graceful shutdown
