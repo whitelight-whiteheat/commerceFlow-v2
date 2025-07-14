@@ -57,6 +57,20 @@ app.use(limiter);
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
+// Root endpoint - Welcome message
+app.get('/', (req, res) => {
+  res.json({
+    message: '🚀 CommerceFlow API is running!',
+    version: '1.0.0',
+    endpoints: {
+      health: '/health',
+      api: '/api',
+      docs: 'Coming soon...'
+    },
+    timestamp: new Date().toISOString()
+  });
+});
+
 // Health check - CRITICAL for Railway
 app.get('/health', (req, res) => {
   res.json({ 
@@ -65,7 +79,8 @@ app.get('/health', (req, res) => {
     port: PORT,
     environment: process.env.NODE_ENV || 'development',
     database: !!process.env.DATABASE_URL,
-    jwt: !!process.env.JWT_SECRET
+    jwt: !!process.env.JWT_SECRET,
+    uptime: process.uptime()
   });
 });
 
@@ -100,6 +115,7 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log(`🔗 Database: ${process.env.DATABASE_URL ? 'Connected' : 'Missing DATABASE_URL'}`);
   console.log(`🔐 JWT: ${process.env.JWT_SECRET ? 'Configured' : 'Missing JWT_SECRET'}`);
+  console.log(`🎯 Root endpoint: http://localhost:${PORT}/`);
 });
 
 // Graceful shutdown
