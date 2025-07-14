@@ -1,288 +1,356 @@
-<<<<<<< HEAD
-# CommerceFlow v2 🛍️
+# 🚀 CommerceFlow v2
 
-A modern, full-stack e-commerce application built with React, Express, Prisma, and PostgreSQL. Deployed seamlessly on Railway with a beautiful, responsive UI and comprehensive backend API.
+A modern, full-stack e-commerce platform built with React, Express.js, and PostgreSQL. Deployed on Railway with automatic CI/CD.
 
 ## ✨ Features
 
-### 🛒 E-commerce Features
-- **Product Management**: Full CRUD operations with categories, images, and inventory
-- **Shopping Cart**: Add, update, remove items with real-time sync
-- **Order Management**: Complete order lifecycle with status tracking
-- **User Reviews**: Product ratings and comments system
-- **Search & Filtering**: Advanced product search with multiple filters
-- **Responsive Design**: Mobile-first approach with modern UI/UX
+- **🛍️ Complete E-commerce**: Product catalog, shopping cart, orders, reviews
+- **👤 User Management**: Registration, authentication, user profiles
+- **🔐 Admin Dashboard**: Product management, order processing, user administration
+- **💳 Payment Integration**: Stripe payment processing (optional)
+- **📱 Responsive Design**: Mobile-first design with Tailwind CSS
+- **🚀 Modern Stack**: React 19, Express 5, Prisma ORM, PostgreSQL
+- **☁️ Cloud Deployed**: Railway backend, Vercel frontend
+- **🔄 Auto Deploy**: Git-based deployment with health checks
 
-### 🔐 Authentication & Security
-- **JWT Authentication**: Secure token-based authentication
-- **Role-based Access**: User and Admin roles with permissions
-- **Password Hashing**: Secure password storage with bcrypt
-- **Input Validation**: Comprehensive form validation
-- **Rate Limiting**: API protection against abuse
+## 🏗️ Architecture
 
-### 🎨 Modern UI/UX
-- **Tailwind CSS**: Utility-first styling with custom design system
-- **Color Themes**: Beautiful gradient and color palette
-- **Animations**: Smooth transitions and micro-interactions
-- **Responsive**: Works perfectly on all devices
-- **Accessibility**: WCAG compliant components
-
-### 🚀 Performance & Scalability
-- **Prisma ORM**: Type-safe database queries
-- **PostgreSQL**: Robust relational database
-- **Railway Deployment**: Zero-config deployment
-- **Optimized Builds**: Fast loading and efficient code splitting
-- **Error Handling**: Comprehensive error management
-
-## 🏗️ Tech Stack
-
-### Frontend
-- **React 19** - Modern React with hooks
-- **Vite** - Fast build tool and dev server
-- **React Router** - Client-side routing
-- **Tailwind CSS** - Utility-first CSS framework
-- **Zustand** - Lightweight state management
-- **Axios** - HTTP client for API calls
-- **Lucide React** - Beautiful icons
-- **React Hot Toast** - Toast notifications
-
-### Backend
-- **Express.js** - Fast, unopinionated web framework
-- **Prisma** - Next-generation ORM
-- **PostgreSQL** - Powerful, open-source database
-- **JWT** - JSON Web Tokens for authentication
-- **bcryptjs** - Password hashing
-- **Express Validator** - Input validation
-- **Helmet** - Security headers
-- **CORS** - Cross-origin resource sharing
-
-### Deployment
-- **Railway** - Zero-config deployment platform
-- **PostgreSQL** - Managed database service
-
-## 📋 Prerequisites
-
-- Node.js 18+ 
-- npm or yarn
-- Railway account
-- PostgreSQL database (Railway provides this)
+```
+commerceFlow-v2/
+├── backend/                 # Express.js API server
+│   ├── src/
+│   │   ├── routes/         # API endpoints
+│   │   ├── middleware/     # Auth, validation, error handling
+│   │   ├── server.js       # Main server file
+│   │   └── seed.js         # Database seeding
+│   ├── prisma/             # Database schema & migrations
+│   └── railway.json        # Railway deployment config
+├── frontend/               # React/Vite application
+│   ├── src/
+│   │   ├── components/     # Reusable UI components
+│   │   ├── pages/          # Page components
+│   │   ├── stores/         # Zustand state management
+│   │   └── lib/            # API client & utilities
+│   └── vite.config.js      # Vite configuration
+└── scripts/                # Development & maintenance scripts
+```
 
 ## 🚀 Quick Start
 
-### 1. Clone the Repository
+### Prerequisites
+- Node.js 18+
+- npm or yarn
+- Git
+- Railway account (for deployment)
 
-```bash
-git clone <your-repo-url>
-cd commerceFlow-v2
-```
+### Local Development
 
-### 2. Backend Setup
+1. **Clone the repository**
+   ```bash
+   git clone <your-repo-url>
+   cd commerceFlow-v2
+   ```
 
-```bash
-cd backend
+2. **One-command setup** (Windows)
+   ```bash
+   ./start-dev.ps1
+   ```
 
-# Install dependencies
-npm install
+3. **Manual setup**
+   ```bash
+   # Backend setup
+   cd backend
+   cp env.example .env
+   npm install
+   npm run db:generate
+   npm run db:push
+   npm run db:seed
+   npm run dev
 
-# Copy environment template
-cp env.example .env
+   # Frontend setup (new terminal)
+   cd frontend
+   echo "VITE_API_URL=http://localhost:5000/api" > .env.local
+   npm install
+   npm run dev
+   ```
 
-# Configure your environment variables
-# DATABASE_URL - Your Railway PostgreSQL URL
-# JWT_SECRET - A strong secret key
-# FRONTEND_URL - Your frontend URL
-
-# Generate Prisma client
-npm run db:generate
-
-# Push schema to database
-npm run db:push
-
-# Seed the database
-npm run db:seed
-
-# Start development server
-npm run dev
-```
-
-### 3. Frontend Setup
-
-```bash
-cd frontend
-
-# Install dependencies
-npm install
-
-# Create environment file
-echo "VITE_API_URL=http://localhost:5000/api" > .env
-
-# Start development server
-npm run dev
-```
-
-### 4. Access the Application
-
-- **Frontend**: http://localhost:5173
-- **Backend API**: http://localhost:5000
-- **API Health Check**: http://localhost:5000/health
-
-## 🌱 Database Seeding
-
-The application comes with sample data for testing:
+4. **Access the application**
+   - Frontend: http://localhost:5173
+   - Backend API: http://localhost:5000
+   - Health Check: http://localhost:5000/health
+   - Database GUI: http://localhost:5555 (Prisma Studio)
 
 ### Test Accounts
 - **Admin**: `admin@commerceflow.com` / `admin123`
 - **User**: `user@commerceflow.com` / `user123`
 
-### Sample Data
-- 5 product categories (Electronics, Clothing, Home & Garden, Books, Sports)
-- 10 sample products with images and descriptions
-- Complete database schema with relationships
+## 🛠️ Development
 
-## 🚀 Railway Deployment
+### Available Scripts
 
-### 1. Backend Deployment
+#### Backend
+```bash
+cd backend
+npm run dev          # Start development server
+npm run db:generate  # Generate Prisma client
+npm run db:push      # Push schema to database
+npm run db:migrate   # Run migrations
+npm run db:seed      # Seed database
+npm run db:studio    # Open Prisma Studio
+```
 
-1. Connect your GitHub repository to Railway
-2. Create a new service from the `backend` directory
-3. Add environment variables:
-   ```
-   DATABASE_URL=your-railway-postgres-url
-   JWT_SECRET=your-super-secret-jwt-key
-   NODE_ENV=production
-   FRONTEND_URL=your-frontend-url
-   ```
-4. Deploy automatically on push to main branch
+#### Frontend
+```bash
+cd frontend
+npm run dev          # Start development server
+npm run build        # Build for production
+npm run preview      # Preview production build
+npm run lint         # Run ESLint
+```
 
-### 2. Frontend Deployment
+#### Maintenance
+```bash
+./maintenance.ps1 -All              # Run all maintenance tasks
+./maintenance.ps1 -UpdateDependencies  # Update packages
+./maintenance.ps1 -SecurityAudit    # Security audit
+./maintenance.ps1 -HealthCheck      # System health check
+```
 
-1. Create another service from the `frontend` directory
-2. Add environment variables:
-   ```
-   VITE_API_URL=your-backend-railway-url/api
-   ```
-3. Deploy automatically on push to main branch
+### Environment Variables
 
-### 3. Database Setup
+#### Backend (.env)
+```bash
+# Required
+DATABASE_URL="postgresql://username:password@host:port/database"
+JWT_SECRET="your-super-secret-jwt-key-minimum-32-characters"
+FRONTEND_URL="http://localhost:5173"
 
-1. Create a PostgreSQL service in Railway
-2. Copy the DATABASE_URL to your backend environment variables
-3. Run migrations and seed data:
-   ```bash
-   npm run db:push
-   npm run db:seed
-   ```
+# Optional
+PORT=5000
+NODE_ENV="development"
+STRIPE_SECRET_KEY="sk_test_..."
+STRIPE_WEBHOOK_SECRET="whsec_..."
+CLOUDINARY_CLOUD_NAME="your_cloudinary_cloud_name"
+CLOUDINARY_API_KEY="your_cloudinary_api_key"
+CLOUDINARY_API_SECRET="your_cloudinary_api_secret"
+```
 
-## 📚 API Documentation
+#### Frontend (.env.local)
+```bash
+VITE_API_URL=http://localhost:5000/api
+```
 
-### Authentication Endpoints
-- `POST /api/auth/register` - User registration
-- `POST /api/auth/login` - User login
-- `GET /api/auth/me` - Get current user
-- `PUT /api/auth/profile` - Update profile
+## 🚀 Deployment
 
-### Product Endpoints
-- `GET /api/products` - Get all products (with filtering)
-- `GET /api/products/:id` - Get single product
-- `POST /api/products` - Create product (admin)
-- `PUT /api/products/:id` - Update product (admin)
-- `DELETE /api/products/:id` - Delete product (admin)
+### Railway Deployment
 
-### Cart Endpoints
-- `GET /api/cart` - Get user's cart
-- `POST /api/cart/add` - Add item to cart
-- `PUT /api/cart/update/:itemId` - Update cart item
-- `DELETE /api/cart/remove/:itemId` - Remove item from cart
-- `DELETE /api/cart/clear` - Clear cart
+1. **Database Setup**
+   - Create PostgreSQL service on Railway
+   - Copy `DATABASE_URL` to backend environment variables
 
-### Order Endpoints
-- `GET /api/orders` - Get user's orders
-- `GET /api/orders/:id` - Get single order
-- `POST /api/orders/create` - Create order from cart
-- `PUT /api/orders/:id/status` - Update order status (admin)
+2. **Backend Deployment**
+   - Connect GitHub repository
+   - Set root directory to `backend`
+   - Configure environment variables
+   - Deploy and run database migrations
 
-### Review Endpoints
-- `GET /api/reviews/product/:productId` - Get product reviews
-- `POST /api/reviews` - Create review
-- `PUT /api/reviews/:id` - Update review
-- `DELETE /api/reviews/:id` - Delete review
+3. **Frontend Deployment**
+   - Connect same repository
+   - Set root directory to `frontend`
+   - Set `VITE_API_URL` to backend Railway URL
+   - Deploy
 
-## 🎨 Design System
+### Environment Variables for Production
 
-### Color Palette
-- **Primary**: Blue gradient (#0ea5e9 to #0284c7)
-- **Secondary**: Purple gradient (#d946ef to #c026d3)
-- **Accent**: Yellow (#eab308)
-- **Success**: Green (#22c55e)
-- **Warning**: Orange (#f59e0b)
-- **Error**: Red (#ef4444)
+#### Backend (Railway)
+```bash
+DATABASE_URL=your-railway-postgresql-url
+JWT_SECRET=your-production-jwt-secret
+NODE_ENV=production
+FRONTEND_URL=https://your-frontend-url.vercel.app
+```
 
-### Typography
-- **Font Family**: Inter (Google Fonts)
-- **Weights**: 300, 400, 500, 600, 700, 800, 900
+#### Frontend (Vercel)
+```bash
+VITE_API_URL=https://your-backend-url.railway.app/api
+```
 
-### Components
-- **Buttons**: Primary, Secondary, Outline, Ghost variants
-- **Cards**: Hover effects and shadows
-- **Forms**: Consistent styling with validation
-- **Badges**: Status indicators
-- **Modals**: Overlay dialogs
+## 📊 Monitoring & Health Checks
 
-## 🔧 Available Scripts
+### Health Check Endpoints
+- **Backend**: `GET /health`
+- **Frontend**: Automatic Railway health checks
+
+### Monitoring Tools
+- Railway Dashboard (built-in)
+- Application logs via Railway CLI
+- Database monitoring via Prisma Studio
+
+### Performance Monitoring
+```bash
+# Check backend health
+curl https://your-backend-url.railway.app/health
+
+# Check frontend
+curl https://your-frontend-url.vercel.app
+
+# View logs
+railway logs --service backend
+railway logs --service frontend
+```
+
+## 🔒 Security
+
+### Security Features
+- ✅ JWT authentication with secure tokens
+- ✅ Password hashing with bcrypt
+- ✅ CORS protection
+- ✅ Rate limiting
+- ✅ Input validation
+- ✅ SQL injection protection (Prisma)
+- ✅ XSS protection (Helmet)
+- ✅ HTTPS enforcement
+
+### Security Best Practices
+- Use strong JWT secrets (32+ characters)
+- Rotate secrets regularly
+- Never commit `.env` files
+- Keep dependencies updated
+- Run security audits regularly
+
+## 🧪 Testing
+
+### API Testing
+```bash
+# Health check
+curl http://localhost:5000/health
+
+# Authentication
+curl -X POST http://localhost:5000/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"admin@commerceflow.com","password":"admin123"}'
+
+# Protected routes
+curl -X GET http://localhost:5000/api/users/profile \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+```
+
+### Database Testing
+```bash
+# Open Prisma Studio
+npm run db:studio
+
+# Reset database
+npm run db:push --force-reset
+npm run db:seed
+```
+
+## 🔄 CI/CD Pipeline
+
+### Automated Deployment
+1. Push to `main` branch
+2. Railway automatically deploys backend
+3. Vercel automatically deploys frontend
+4. Health checks verify deployment
+
+### Manual Deployment
+```bash
+# Deploy to Railway
+git push origin main
+
+# Check deployment status
+railway status
+
+# View logs
+railway logs
+
+# Restart services if needed
+railway service restart
+```
+
+## 🐛 Troubleshooting
+
+### Common Issues
+
+#### Database Connection Failed
+```bash
+# Check DATABASE_URL
+echo $DATABASE_URL
+
+# Test connection
+npm run db:studio
+
+# Reset database
+npm run db:push --force-reset
+```
+
+#### CORS Errors
+- Verify `FRONTEND_URL` in backend environment
+- Ensure URLs match exactly (including https)
+- Check for trailing slashes
+
+#### Build Failures
+- Check build logs in Railway/Vercel
+- Verify all dependencies are in package.json
+- Check for syntax errors
+
+#### Authentication Issues
+- Verify `JWT_SECRET` is set
+- Check token expiration
+- Ensure frontend API URL is correct
+
+### Debug Commands
+```bash
+# Check service status
+railway status
+
+# View environment variables
+railway variables
+
+# Check logs
+railway logs
+
+# Restart services
+railway service restart
+```
+
+## 📚 Documentation
+
+- [Deployment Guide](DEPLOYMENT.md) - Complete deployment instructions
+- [Development Guide](DEVELOPMENT.md) - Development workflow and best practices
+- [API Documentation](backend/README.md) - Backend API reference
+
+## 🛠️ Tech Stack
 
 ### Backend
-```bash
-npm run dev          # Start development server
-npm start           # Start production server
-npm run db:generate # Generate Prisma client
-npm run db:push     # Push schema to database
-npm run db:migrate  # Run database migrations
-npm run db:studio   # Open Prisma Studio
-npm run db:seed     # Seed database with sample data
-```
+- **Runtime**: Node.js 18+
+- **Framework**: Express.js 5
+- **Database**: PostgreSQL with Prisma ORM
+- **Authentication**: JWT with bcrypt
+- **Validation**: express-validator
+- **Security**: Helmet, CORS, Rate limiting
+- **Deployment**: Railway
 
 ### Frontend
-```bash
-npm run dev         # Start development server
-npm run build       # Build for production
-npm run preview     # Preview production build
-npm run lint        # Run ESLint
-```
+- **Framework**: React 19 with Vite
+- **Styling**: Tailwind CSS
+- **State Management**: Zustand
+- **HTTP Client**: Axios
+- **UI Components**: Lucide React icons
+- **Deployment**: Vercel
 
-## 🛡️ Security Features
-
-- **JWT Authentication** with secure token handling
-- **Password Hashing** with bcrypt (12 rounds)
-- **CORS Configuration** for cross-origin requests
-- **Rate Limiting** to prevent abuse
-- **Input Validation** with express-validator
-- **Security Headers** with Helmet.js
-- **SQL Injection Protection** with Prisma ORM
-- **XSS Protection** with proper content encoding
-
-## 📱 Responsive Design
-
-The application is fully responsive with:
-- **Mobile-first** approach
-- **Breakpoints**: sm (640px), md (768px), lg (1024px), xl (1280px)
-- **Touch-friendly** interface
-- **Optimized images** and loading
-- **Progressive enhancement**
-
-## 🔍 Performance Optimizations
-
-- **Code Splitting** with React Router
-- **Lazy Loading** for components
-- **Image Optimization** with proper sizing
-- **Caching** strategies
-- **Minified** production builds
-- **Tree Shaking** for unused code removal
+### Development Tools
+- **Package Manager**: npm
+- **Version Control**: Git
+- **Database GUI**: Prisma Studio
+- **Code Quality**: ESLint
+- **Build Tool**: Vite
 
 ## 🤝 Contributing
 
 1. Fork the repository
 2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
+3. Commit your changes (`git commit -m 'feat: add amazing feature'`)
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
@@ -292,23 +360,25 @@ This project is licensed under the ISC License.
 
 ## 🆘 Support
 
-If you encounter any issues or have questions:
+### Documentation
+- [Express.js Docs](https://expressjs.com/)
+- [Prisma Docs](https://prisma.io/docs)
+- [React Docs](https://react.dev/)
+- [Railway Docs](https://docs.railway.app/)
 
-1. Check the [Issues](../../issues) page
-2. Review the documentation above
-3. Create a new issue with detailed information
+### Community
+- [Railway Discord](https://discord.gg/railway)
+- [GitHub Issues](https://github.com/your-repo/issues)
+- [Stack Overflow](https://stackoverflow.com/)
 
-## 🙏 Acknowledgments
-
-- **Railway** for seamless deployment
-- **Prisma** for excellent ORM
-- **Tailwind CSS** for beautiful styling
-- **React** team for the amazing framework
-- **Vite** for fast development experience
+### Maintenance
+- Run `./maintenance.ps1 -All` for regular maintenance
+- Check logs regularly via Railway dashboard
+- Monitor health check endpoints
+- Keep dependencies updated
 
 ---
 
-**Built with ❤️ for modern e-commerce** 
-=======
-# commerceFlow-v2
->>>>>>> a7e26dcdcb983a22cf24942c9f9bf9444defe5c7
+**Happy Coding! 🚀**
+
+*Built with ❤️ using modern web technologies*
