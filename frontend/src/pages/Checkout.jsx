@@ -27,7 +27,7 @@ export default function Checkout() {
   
   const [isProcessing, setIsProcessing] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
-  const [showCardDetails, setShowCardDetails] = useState(false);
+
   const [shippingData, setShippingData] = useState({
     firstName: user?.firstName || '',
     lastName: user?.lastName || '',
@@ -39,7 +39,7 @@ export default function Checkout() {
     zipCode: '',
     country: 'United States'
   });
-  const [paymentData, setPaymentData] = useState({
+  const [paymentData] = useState({
     cardNumber: '',
     expiryDate: '',
     cvv: '',
@@ -84,12 +84,7 @@ export default function Checkout() {
     saveShippingData();
   };
 
-  const handlePaymentChange = (field, value) => {
-    setPaymentData(prev => ({
-      ...prev,
-      [field]: value
-    }));
-  };
+
 
   const validateEmail = (email) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -97,7 +92,7 @@ export default function Checkout() {
   };
 
   const validatePhone = (phone) => {
-    const phoneRegex = /^[\+]?[1-9][\d]{0,15}$/;
+    const phoneRegex = /^[+]?[1-9][\d]{0,15}$/;
     return phoneRegex.test(phone.replace(/\D/g, ''));
   };
 

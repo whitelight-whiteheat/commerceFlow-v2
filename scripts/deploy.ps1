@@ -11,25 +11,25 @@ try {
     exit 1
 }
 
-# Check if Railway CLI is available
+# Check if Render CLI is available
 try {
-    railway --version | Out-Null
-    Write-Host "✅ Railway CLI is available" -ForegroundColor Green
+    render --version | Out-Null
+    Write-Host "✅ Render CLI is available" -ForegroundColor Green
 } catch {
-    Write-Host "⚠️ Railway CLI not found. You'll need to use Railway Dashboard." -ForegroundColor Yellow
+    Write-Host "⚠️ Render CLI not found. You'll need to use Render Dashboard." -ForegroundColor Yellow
 }
 
 Write-Host ""
 Write-Host "📋 DEPLOYMENT CHECKLIST:" -ForegroundColor Cyan
-Write-Host "1. Backend Environment Variables (Railway Dashboard):" -ForegroundColor White
+Write-Host "1. Backend Environment Variables (Render Dashboard):" -ForegroundColor White
 Write-Host "   - JWT_SECRET=your-super-secret-jwt-key-here" -ForegroundColor Gray
-Write-Host "   - FRONTEND_URL=https://your-frontend-url.railway.app" -ForegroundColor Gray
+Write-Host "   - FRONTEND_URL=https://your-frontend-url.onrender.com" -ForegroundColor Gray
 Write-Host "   - NODE_ENV=production" -ForegroundColor Gray
 Write-Host "   - DATABASE_URL (should be set automatically)" -ForegroundColor Gray
 Write-Host "   - REMOVE PORT variable if it exists" -ForegroundColor Red
 Write-Host ""
-Write-Host "2. Frontend Environment Variables (Railway Dashboard):" -ForegroundColor White
-Write-Host "   - VITE_API_URL=https://your-backend-url.railway.app/api" -ForegroundColor Gray
+Write-Host "2. Frontend Environment Variables (Render Dashboard):" -ForegroundColor White
+Write-Host "   - VITE_API_URL=https://your-backend-url.onrender.com/api" -ForegroundColor Gray
 Write-Host ""
 
 # Ask user if they want to proceed
@@ -50,16 +50,16 @@ Write-Host "✅ Code pushed successfully!" -ForegroundColor Green
 
 Write-Host ""
 Write-Host "🎯 NEXT STEPS:" -ForegroundColor Cyan
-Write-Host "1. Go to Railway Dashboard" -ForegroundColor White
+Write-Host "1. Go to Render Dashboard" -ForegroundColor White
 Write-Host "2. Deploy your backend service" -ForegroundColor White
-Write-Host "3. Run: railway run npm run deploy (for database setup)" -ForegroundColor White
+Write-Host "3. Run: npm run deploy (Render auto-deploys)" -ForegroundColor White
 Write-Host "4. Deploy your frontend service" -ForegroundColor White
 Write-Host "5. Test your live demo!" -ForegroundColor White
 
 Write-Host ""
 Write-Host "🔗 Your live demo will be available at:" -ForegroundColor Green
-Write-Host "   Frontend: https://your-frontend-url.railway.app" -ForegroundColor White
-Write-Host "   Backend: https://your-backend-url.railway.app/health" -ForegroundColor White
+Write-Host "   Frontend: https://your-frontend-url.onrender.com" -ForegroundColor White
+Write-Host "   Backend: https://your-backend-url.onrender.com/health" -ForegroundColor White
 
 Write-Host ""
 Write-Host "📧 Test Accounts:" -ForegroundColor Cyan

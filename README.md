@@ -1,6 +1,6 @@
 # 🚀 CommerceFlow v2
 
-A modern, full-stack e-commerce platform built with React, Express.js, and PostgreSQL. Deployed on Railway with automatic CI/CD.
+A modern, full-stack e-commerce platform built with React, Express.js, and PostgreSQL. Deployed on Render with automatic CI/CD.
 
 ## ✨ Features
 
@@ -10,7 +10,7 @@ A modern, full-stack e-commerce platform built with React, Express.js, and Postg
 - **💳 Payment Integration**: Stripe payment processing (optional)
 - **📱 Responsive Design**: Mobile-first design with Tailwind CSS
 - **🚀 Modern Stack**: React 19, Express 5, Prisma ORM, PostgreSQL
-- **☁️ Cloud Deployed**: Railway backend, Vercel frontend
+- **☁️ Cloud Deployed**: Render backend, Vercel frontend
 - **🔄 Auto Deploy**: Git-based deployment with health checks
 
 ## 🏗️ Architecture
@@ -24,7 +24,7 @@ commerceFlow-v2/
 │   │   ├── server.js       # Main server file
 │   │   └── seed.js         # Database seeding
 │   ├── prisma/             # Database schema & migrations
-│   └── railway.json        # Railway deployment config
+│   └── render.yaml         # Render deployment config
 ├── frontend/               # React/Vite application
 │   ├── src/
 │   │   ├── components/     # Reusable UI components
@@ -41,7 +41,7 @@ commerceFlow-v2/
 - Node.js 18+
 - npm or yarn
 - Git
-- Railway account (for deployment)
+- Render account (for deployment)
 
 ### Local Development
 

@@ -22,11 +22,19 @@ export default function AdminLogin() {
     try {
       const result = await login(email, password);
       
-      // Check if user is admin
-      if (result.user && result.user.role === 'ADMIN') {
-        navigate('/admin/dashboard');
+      if (result.success) {
+        // Get the current user from the store to check role
+        const { user } = useAuthStore.getState();
+        
+        if (user && user.role === 'ADMIN') {
+          navigate('/admin/dashboard');
+        } else {
+          setError('Access denied. Admin privileges required.');
+          // Logout the user since they're not admin
+          useAuthStore.getState().logout();
+        }
       } else {
-        setError('Access denied. Admin privileges required.');
+        setError(result.error || 'Login failed. Please try again.');
       }
     } catch (err) {
       setError(err.message || 'Login failed. Please try again.');

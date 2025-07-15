@@ -70,7 +70,7 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div>
+    <div className="w-full">
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-neutral-900">Dashboard</h1>
@@ -78,7 +78,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* Quick Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8 w-full">
         <div className="bg-white rounded-xl p-6 shadow-soft">
           <div className="flex items-center justify-between">
             <div>
@@ -157,7 +157,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* Quick Actions */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8 w-full">
         <Link
           to="/admin/products"
           className="bg-white rounded-xl p-6 shadow-soft hover:shadow-medium transition-all duration-200 group"
@@ -220,7 +220,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 w-full">
         {/* Recent Orders */}
         <div className="bg-white rounded-xl shadow-soft p-6">
           <div className="flex items-center justify-between mb-6">

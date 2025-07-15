@@ -2,7 +2,7 @@
 Write-Host "🏥 COMMERCEFLOW HEALTH CHECK" -ForegroundColor Cyan
 Write-Host "============================" -ForegroundColor Cyan
 
-$BackendURL = "https://commerceflow-v2-production.up.railway.app"
+$BackendURL = "https://your-render-backend-url.onrender.com"
 
 Write-Host "`n🔍 Checking Backend Health..." -ForegroundColor Yellow
 
@@ -31,7 +31,7 @@ try {
 }
 
 Write-Host "`n🎯 NEXT STEPS:" -ForegroundColor Cyan
-Write-Host "   1. Deploy frontend in Railway Dashboard" -ForegroundColor Yellow
+Write-Host "   1. Deploy frontend in Render Dashboard" -ForegroundColor Yellow
 Write-Host "   2. Set VITE_API_URL environment variable" -ForegroundColor Yellow
 Write-Host "   3. Test your live demo!" -ForegroundColor Yellow
 

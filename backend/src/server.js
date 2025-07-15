@@ -13,6 +13,7 @@ import orderRoutes from './routes/orders.js';
 import cartRoutes from './routes/cart.js';
 import reviewRoutes from './routes/reviews.js';
 import userRoutes from './routes/users.js';
+import analyticsRoutes from './routes/analytics.js';
 
 // Import middleware
 import { authenticateToken } from './middleware/auth.js';
@@ -23,7 +24,7 @@ dotenv.config();
 const app = express();
 const prisma = new PrismaClient();
 
-// CRITICAL FIX: Use Railway's injected port, no fallback
+// CRITICAL FIX: Use Render's injected port, no fallback
 const PORT = process.env.PORT;
 
 // Environment validation
@@ -65,7 +66,7 @@ app.get('/', (req, res) => {
   });
 });
 
-// Health check - CRITICAL for Railway
+// Health check - CRITICAL for Render
 app.get('/health', (req, res) => {
   res.json({ 
     status: 'OK', 
@@ -123,6 +124,7 @@ app.use('/api/orders', authenticateToken, orderRoutes);
 app.use('/api/cart', authenticateToken, cartRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/users', authenticateToken, userRoutes);
+app.use('/api/analytics', authenticateToken, analyticsRoutes);
 
 // Error handling
 app.use(notFoundHandler);
