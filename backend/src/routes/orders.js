@@ -5,19 +5,31 @@ import { PrismaClient } from '@prisma/client';
 const router = express.Router();
 const prisma = new PrismaClient();
 
-// Get user's orders
+// Get user's orders (or all orders for admin)
 router.get('/', async (req, res) => {
   try {
+    const isAdmin = req.user.role === 'ADMIN';
+    const whereClause = isAdmin ? {} : { userId: req.user.id };
+
     const orders = await prisma.order.findMany({
-      where: { userId: req.user.id },
+      where: whereClause,
       include: {
+        user: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true
+          }
+        },
         orderItems: {
           include: {
             product: {
               select: {
                 id: true,
                 name: true,
-                images: true
+                images: true,
+                price: true
               }
             }
           }
@@ -67,6 +79,104 @@ router.get('/:id', async (req, res) => {
   } catch (error) {
     console.error('Get order error:', error);
     res.status(500).json({ message: 'Failed to fetch order' });
+  }
+});
+
+// Get order statistics (admin only)
+router.get('/stats', async (req, res) => {
+  try {
+    if (req.user.role !== 'ADMIN') {
+      return res.status(403).json({ message: 'Admin access required' });
+    }
+
+    const totalOrders = await prisma.order.count();
+    const totalRevenue = await prisma.order.aggregate({
+      _sum: { total: true }
+    });
+    const pendingOrders = await prisma.order.count({
+      where: { status: 'PENDING' }
+    });
+    const completedOrders = await prisma.order.count({
+      where: { status: 'DELIVERED' }
+    });
+
+    // Recent orders for dashboard
+    const recentOrders = await prisma.order.findMany({
+      take: 5,
+      include: {
+        user: {
+          select: {
+            firstName: true,
+            lastName: true,
+            email: true
+          }
+        }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    res.json({
+      stats: {
+        totalOrders,
+        totalRevenue: totalRevenue._sum.total || 0,
+        pendingOrders,
+        completedOrders
+      },
+      recentOrders
+    });
+  } catch (error) {
+    console.error('Get order stats error:', error);
+    res.status(500).json({ message: 'Failed to fetch order statistics' });
+  }
+});
+
+// Update order status (admin only)
+router.put('/:id/status', async (req, res) => {
+  try {
+    if (req.user.role !== 'ADMIN') {
+      return res.status(403).json({ message: 'Admin access required' });
+    }
+
+    const { id } = req.params;
+    const { status } = req.body;
+
+    const validStatuses = ['PENDING', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED'];
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({ message: 'Invalid status' });
+    }
+
+    const order = await prisma.order.update({
+      where: { id },
+      data: { status },
+      include: {
+        user: {
+          select: {
+            firstName: true,
+            lastName: true,
+            email: true
+          }
+        },
+        orderItems: {
+          include: {
+            product: {
+              select: {
+                id: true,
+                name: true,
+                images: true
+              }
+            }
+          }
+        }
+      }
+    });
+
+    res.json({ 
+      message: 'Order status updated successfully',
+      order 
+    });
+  } catch (error) {
+    console.error('Update order status error:', error);
+    res.status(500).json({ message: 'Failed to update order status' });
   }
 });
 

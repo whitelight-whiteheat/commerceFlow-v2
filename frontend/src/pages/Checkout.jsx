@@ -1,8 +1,21 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCartStore } from '../stores/cartStore';
 import { useAuthStore } from '../stores/authStore';
-import { ArrowLeft, CreditCard, Truck, CheckCircle, Lock } from 'lucide-react';
+import { 
+  ArrowLeft, 
+  CreditCard, 
+  Truck, 
+  CheckCircle, 
+  Lock, 
+  Shield, 
+  Clock,
+  MapPin,
+  Phone,
+  Mail,
+  Eye,
+  EyeOff
+} from 'lucide-react';
 import { cn } from '../lib/utils';
 import { api } from '../lib/api';
 import toast from 'react-hot-toast';
@@ -14,6 +27,7 @@ export default function Checkout() {
   
   const [isProcessing, setIsProcessing] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
+  const [showCardDetails, setShowCardDetails] = useState(false);
   const [shippingData, setShippingData] = useState({
     firstName: user?.firstName || '',
     lastName: user?.lastName || '',
@@ -25,9 +39,36 @@ export default function Checkout() {
     zipCode: '',
     country: 'United States'
   });
+  const [paymentData, setPaymentData] = useState({
+    cardNumber: '',
+    expiryDate: '',
+    cvv: '',
+    cardholderName: ''
+  });
   const [paymentMethod, setPaymentMethod] = useState('card');
   const [orderComplete, setOrderComplete] = useState(false);
   const [orderId, setOrderId] = useState(null);
+  const [sessionTimeout, setSessionTimeout] = useState(900); // 15 minutes
+
+  // Session timeout countdown
+  useEffect(() => {
+    if (sessionTimeout > 0 && currentStep < 3) {
+      const timer = setTimeout(() => setSessionTimeout(sessionTimeout - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [sessionTimeout, currentStep]);
+
+  // Auto-save shipping data to localStorage
+  useEffect(() => {
+    const savedData = localStorage.getItem('checkout_shipping');
+    if (savedData) {
+      setShippingData(prev => ({ ...prev, ...JSON.parse(savedData) }));
+    }
+  }, []);
+
+  const saveShippingData = () => {
+    localStorage.setItem('checkout_shipping', JSON.stringify(shippingData));
+  };
 
   const taxRate = 0.08;
   const shippingCost = 0; // Free shipping
@@ -40,16 +81,71 @@ export default function Checkout() {
       ...prev,
       [field]: value
     }));
+    saveShippingData();
+  };
+
+  const handlePaymentChange = (field, value) => {
+    setPaymentData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const validateEmail = (email) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  const validatePhone = (phone) => {
+    const phoneRegex = /^[\+]?[1-9][\d]{0,15}$/;
+    return phoneRegex.test(phone.replace(/\D/g, ''));
   };
 
   const validateShippingForm = () => {
     const required = ['firstName', 'lastName', 'email', 'street', 'city', 'state', 'zipCode'];
+    
     for (const field of required) {
       if (!shippingData[field]?.trim()) {
         toast.error(`Please fill in your ${field.replace(/([A-Z])/g, ' $1').toLowerCase()}`);
         return false;
       }
     }
+
+    if (!validateEmail(shippingData.email)) {
+      toast.error('Please enter a valid email address');
+      return false;
+    }
+
+    if (shippingData.phone && !validatePhone(shippingData.phone)) {
+      toast.error('Please enter a valid phone number');
+      return false;
+    }
+
+    return true;
+  };
+
+  const validatePaymentForm = () => {
+    if (paymentMethod === 'card') {
+      const required = ['cardNumber', 'expiryDate', 'cvv', 'cardholderName'];
+      
+      for (const field of required) {
+        if (!paymentData[field]?.trim()) {
+          toast.error(`Please fill in your ${field.replace(/([A-Z])/g, ' $1').toLowerCase()}`);
+          return false;
+        }
+      }
+
+      if (paymentData.cardNumber.replace(/\s/g, '').length < 13) {
+        toast.error('Please enter a valid card number');
+        return false;
+      }
+
+      if (paymentData.cvv.length < 3) {
+        toast.error('Please enter a valid CVV');
+        return false;
+      }
+    }
+
     return true;
   };
 
@@ -62,6 +158,10 @@ export default function Checkout() {
   const handlePlaceOrder = async () => {
     if (items.length === 0) {
       toast.error('Your cart is empty');
+      return;
+    }
+
+    if (!validatePaymentForm()) {
       return;
     }
 
@@ -91,8 +191,9 @@ export default function Checkout() {
       setOrderComplete(true);
       setCurrentStep(3);
       
-      // Clear cart after successful order
+      // Clear cart and saved data after successful order
       await clearCart();
+      localStorage.removeItem('checkout_shipping');
       
       toast.success('Order placed successfully!');
     } catch (error) {
@@ -146,22 +247,39 @@ export default function Checkout() {
           <h1 className="text-3xl font-bold text-neutral-900">Checkout</h1>
         </div>
 
+        {/* Session Timeout Warning */}
+        {sessionTimeout < 300 && sessionTimeout > 0 && currentStep < 3 && (
+          <div className="mb-6 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+            <div className="flex items-center gap-3">
+              <Clock className="text-yellow-600" size={20} />
+              <div>
+                <p className="text-sm font-medium text-yellow-800">
+                  Session expires in {Math.floor(sessionTimeout / 60)}:{(sessionTimeout % 60).toString().padStart(2, '0')}
+                </p>
+                <p className="text-xs text-yellow-700">
+                  Complete your checkout to avoid losing your cart
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Progress Steps */}
         <div className="mb-8">
           <div className="flex items-center justify-center">
             {[1, 2, 3].map((step) => (
               <div key={step} className="flex items-center">
                 <div className={cn(
-                  "w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium",
+                  "w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium transition-all duration-200",
                   currentStep >= step
-                    ? "bg-primary-600 text-white"
+                    ? "bg-primary-600 text-white shadow-lg"
                     : "bg-neutral-200 text-neutral-600"
                 )}>
-                  {currentStep > step ? <CheckCircle size={16} /> : step}
+                  {currentStep > step ? <CheckCircle size={18} /> : step}
                 </div>
                 {step < 3 && (
                   <div className={cn(
-                    "w-16 h-0.5 mx-2",
+                    "w-20 h-1 mx-3 transition-all duration-200",
                     currentStep > step ? "bg-primary-600" : "bg-neutral-200"
                   )} />
                 )}
@@ -169,13 +287,13 @@ export default function Checkout() {
             ))}
           </div>
           <div className="flex justify-center mt-4 text-sm text-neutral-600">
-            <span className={cn("mx-8", currentStep >= 1 && "text-primary-600 font-medium")}>
+            <span className={cn("mx-8 transition-colors", currentStep >= 1 && "text-primary-600 font-medium")}>
               Shipping
             </span>
-            <span className={cn("mx-8", currentStep >= 2 && "text-primary-600 font-medium")}>
+            <span className={cn("mx-8 transition-colors", currentStep >= 2 && "text-primary-600 font-medium")}>
               Payment
             </span>
-            <span className={cn("mx-8", currentStep >= 3 && "text-primary-600 font-medium")}>
+            <span className={cn("mx-8 transition-colors", currentStep >= 3 && "text-primary-600 font-medium")}>
               Confirmation
             </span>
           </div>

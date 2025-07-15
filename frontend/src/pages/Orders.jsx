@@ -1,6 +1,18 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Package, Truck, CheckCircle, Clock, XCircle } from 'lucide-react';
+import { 
+  ArrowLeft, 
+  Package, 
+  Truck, 
+  CheckCircle, 
+  Clock, 
+  XCircle, 
+  MapPin, 
+  Calendar,
+  DollarSign,
+  RefreshCw,
+  Eye
+} from 'lucide-react';
 import { cn } from '../lib/utils';
 import { api } from '../lib/api';
 import toast from 'react-hot-toast';
@@ -37,13 +49,15 @@ export default function Orders() {
   const [orders, setOrders] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   useEffect(() => {
     loadOrders();
   }, []);
 
-  const loadOrders = async () => {
+  const loadOrders = async (showLoading = true) => {
     try {
+      if (showLoading) setIsLoading(true);
       const response = await api.get('/orders');
       setOrders(response.data.orders || []);
     } catch (error) {
@@ -51,7 +65,14 @@ export default function Orders() {
       toast.error('Failed to load orders');
     } finally {
       setIsLoading(false);
+      setIsRefreshing(false);
     }
+  };
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await loadOrders(false);
+    toast.success('Orders refreshed');
   };
 
   const formatDate = (dateString) => {
@@ -103,17 +124,29 @@ export default function Orders() {
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <Link 
-            to="/products" 
-            className="inline-flex items-center gap-2 text-neutral-600 hover:text-neutral-900 transition-colors mb-4"
-          >
-            <ArrowLeft size={20} />
-            Back to Shopping
-          </Link>
-          <h1 className="text-3xl font-bold text-neutral-900">My Orders</h1>
-          <p className="text-neutral-600 mt-2">
-            Track your orders and view order history
-          </p>
+          <div className="flex items-center justify-between">
+            <div>
+              <Link 
+                to="/products" 
+                className="inline-flex items-center gap-2 text-neutral-600 hover:text-neutral-900 transition-colors mb-4"
+              >
+                <ArrowLeft size={20} />
+                Back to Shopping
+              </Link>
+              <h1 className="text-3xl font-bold text-neutral-900">My Orders</h1>
+              <p className="text-neutral-600 mt-2">
+                Track your orders and view order history
+              </p>
+            </div>
+            <button
+              onClick={handleRefresh}
+              disabled={isRefreshing}
+              className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50"
+            >
+              <RefreshCw size={16} className={cn(isRefreshing && "animate-spin")} />
+              Refresh
+            </button>
+          </div>
         </div>
 
         {orders.length === 0 ? (
@@ -193,7 +226,46 @@ export default function Orders() {
             <div className="lg:col-span-1">
               {selectedOrder ? (
                 <div className="bg-white rounded-xl shadow-soft p-6 sticky top-8">
-                  <h3 className="text-xl font-semibold text-neutral-900 mb-6">Order Details</h3>
+                  <div className="flex items-center justify-between mb-6">
+                    <h3 className="text-xl font-semibold text-neutral-900">Order Details</h3>
+                    <span className="font-mono text-sm text-neutral-600">#{selectedOrder.id.slice(-8)}</span>
+                  </div>
+                  
+                  {/* Order Status Timeline */}
+                  <div className="mb-6">
+                    <h4 className="font-medium text-neutral-900 mb-4">Order Status</h4>
+                    <div className="space-y-3">
+                      {Object.entries(orderStatusConfig).map(([status, config]) => {
+                        const Icon = config.icon;
+                        const isActive = selectedOrder.status === status;
+                        const isCompleted = ['DELIVERED', 'CANCELLED'].includes(selectedOrder.status) || 
+                                          ['PENDING', 'PROCESSING', 'SHIPPED'].indexOf(selectedOrder.status) >= 
+                                          ['PENDING', 'PROCESSING', 'SHIPPED'].indexOf(status);
+                        
+                        return (
+                          <div key={status} className="flex items-center gap-3">
+                            <div className={cn(
+                              "w-8 h-8 rounded-full flex items-center justify-center",
+                              isCompleted ? config.color : "bg-neutral-200"
+                            )}>
+                              <Icon size={16} className={isCompleted ? "text-white" : "text-neutral-400"} />
+                            </div>
+                            <div className="flex-1">
+                              <p className={cn(
+                                "text-sm font-medium",
+                                isActive ? "text-neutral-900" : "text-neutral-600"
+                              )}>
+                                {config.label}
+                              </p>
+                              {isActive && (
+                                <p className="text-xs text-neutral-500">Current status</p>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
                   
                   {/* Order Info */}
                   <div className="space-y-4 mb-6">
