@@ -90,6 +90,26 @@ app.get('/test-db', async (req, res) => {
   }
 });
 
+// API root endpoint
+app.get('/api', (req, res) => {
+  res.json({
+    message: 'CommerceFlow API',
+    version: '1.0.0',
+    status: 'running',
+    endpoints: {
+      auth: '/api/auth',
+      products: '/api/products',
+      categories: '/api/categories',
+      orders: '/api/orders',
+      cart: '/api/cart',
+      reviews: '/api/reviews',
+      users: '/api/users',
+      analytics: '/api/analytics'
+    },
+    timestamp: new Date().toISOString()
+  });
+});
+
 // API Docs endpoint for demo/portfolio
 app.get('/api/docs', (req, res) => {
   res.json({
