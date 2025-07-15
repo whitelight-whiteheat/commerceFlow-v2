@@ -4,6 +4,7 @@ import toast from 'react-hot-toast';
 
 // Debug environment variable
 console.log('VITE_API_URL:', import.meta.env.VITE_API_URL);
+console.log('Environment check:', new Date().toISOString());
 
 // Create axios instance
 export const api = axios.create({
