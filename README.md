@@ -1,4 +1,4 @@
-# 🚀 CommerceFlow v2
+# 🚀 CommerceFlow version 2
 
 A modern, full-stack e-commerce platform built with React, Express.js, and PostgreSQL. Deployed on Render with automatic CI/CD.
 
