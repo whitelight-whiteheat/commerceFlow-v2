@@ -10,10 +10,10 @@ const prisma = new PrismaClient();
 
 // Register
 router.post('/register', [
-  body('email').isEmail().normalizeEmail(),
-  body('password').isLength({ min: 6 }),
-  body('firstName').optional().trim().isLength({ min: 1 }),
-  body('lastName').optional().trim().isLength({ min: 1 })
+  body('email').isEmail().normalizeEmail().withMessage('Please provide a valid email address'),
+  body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters long'),
+  body('firstName').optional().trim().isLength({ min: 1 }).withMessage('First name cannot be empty'),
+  body('lastName').optional().trim().isLength({ min: 1 }).withMessage('Last name cannot be empty')
 ], async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -71,10 +71,17 @@ router.post('/register', [
   }
 });
 
+// Add GET /register for browser/demo
+router.get('/register', (req, res) => {
+  res.json({
+    message: 'This endpoint is for POST requests only. Please use POST with email, password, firstName, and lastName.'
+  });
+});
+
 // Login
 router.post('/login', [
-  body('email').isEmail().normalizeEmail(),
-  body('password').notEmpty()
+  body('email').isEmail().normalizeEmail().withMessage('Please provide a valid email address'),
+  body('password').notEmpty().withMessage('Password is required')
 ], async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -118,6 +125,13 @@ router.post('/login', [
     console.error('Login error:', error);
     res.status(500).json({ message: 'Login failed' });
   }
+});
+
+// Add GET /login for browser/demo
+router.get('/login', (req, res) => {
+  res.json({
+    message: 'This endpoint is for POST requests only. Please use POST with email and password.'
+  });
 });
 
 // Get current user

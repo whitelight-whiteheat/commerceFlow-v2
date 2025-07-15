@@ -14,8 +14,7 @@
     "db:migrate": "prisma migrate dev",
     "db:studio": "prisma studio",
     "db:seed": "node src/seed.js",
-    "db:setup": "prisma db push && npm run db:seed",
-    "debug-routes": "node debug-routes.js"
+    "db:setup": "prisma db push && npm run db:seed"
   },
   "keywords": [
     "ecommerce",

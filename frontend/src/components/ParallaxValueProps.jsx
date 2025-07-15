@@ -57,16 +57,19 @@ export default function ParallaxValueProps() {
           Why Shop With Us?
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8">
-          {valueProps.map(({ icon: Icon, title, desc }) => (
-            <div
-              key={title}
-              className="flex flex-col items-center bg-white/80 rounded-xl shadow-soft p-6 text-center backdrop-blur-md border border-neutral-100"
-            >
-              <Icon className="mb-4 text-primary-600" size={36} />
-              <h3 className="font-semibold text-neutral-900 mb-2 text-lg">{title}</h3>
-              <p className="text-neutral-600 text-sm">{desc}</p>
-            </div>
-          ))}
+          {valueProps.map(({ icon, title, desc }) => {
+            const IconComponent = icon;
+            return (
+              <div
+                key={title}
+                className="flex flex-col items-center bg-white/80 rounded-xl shadow-soft p-6 text-center backdrop-blur-md border border-neutral-100"
+              >
+                <IconComponent className="mb-4 text-primary-600" size={36} />
+                <h3 className="font-semibold text-neutral-900 mb-2 text-lg">{title}</h3>
+                <p className="text-neutral-600 text-sm">{desc}</p>
+              </div>
+            );
+          })}
         </div>
       </div>
     </section>

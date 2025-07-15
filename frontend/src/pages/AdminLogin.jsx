@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, Lock, Mail } from 'lucide-react';
 import { useAuthStore } from '../stores/authStore';
-import { cn } from '../utils/cn';
+import { cn } from '../lib/utils';
 
 export default function AdminLogin() {
   const [email, setEmail] = useState('');

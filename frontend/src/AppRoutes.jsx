@@ -12,6 +12,8 @@ import { useAuthStore } from './stores/authStore';
 import { useEffect } from 'react';
 import ProductDetail from './pages/ProductDetail';
 import Cart from './pages/Cart';
+import Checkout from './pages/Checkout';
+import Orders from './pages/Orders';
 
 export default function AppRoutes() {
   const location = useLocation();
@@ -33,6 +35,8 @@ export default function AppRoutes() {
           <Route path="/categories" element={<Categories />} />
           <Route path="/products/:id" element={<ProductDetail />} />
           <Route path="/cart" element={<Cart />} />
+          <Route path="/checkout" element={<Checkout />} />
+          <Route path="/orders" element={<Orders />} />
           {/* Admin Routes */}
           <Route path="/admin/login" element={<AdminLogin />} />
           <Route path="/admin/dashboard" element={<AdminDashboard />} />

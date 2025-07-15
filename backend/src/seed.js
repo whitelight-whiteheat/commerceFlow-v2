@@ -4,7 +4,7 @@ import bcrypt from 'bcryptjs';
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log('🌱 Starting database seed...');
+  // Seed database with initial data
 
   // Create admin user
   const hashedPassword = await bcrypt.hash('admin123', 12);
@@ -21,7 +21,7 @@ async function main() {
     }
   });
 
-  console.log('✅ Admin user created:', adminUser.email);
+
 
   // Create categories
   const categories = [
@@ -60,7 +60,7 @@ async function main() {
       create: category
     });
     createdCategories.push(created);
-    console.log('✅ Category created:', created.name);
+
   }
 
   // Create sample products
@@ -181,7 +181,7 @@ async function main() {
     const created = await prisma.product.create({
       data: product
     });
-    console.log('✅ Product created:', created.name);
+
   }
 
   // Create a regular user for testing
@@ -197,10 +197,8 @@ async function main() {
     }
   });
 
-  console.log('✅ Regular user created:', regularUser.email);
-
-  console.log('🎉 Database seeding completed successfully!');
-  console.log('\n📋 Test Accounts:');
+  console.log('✅ Database seeding completed successfully!');
+  console.log('📋 Test Accounts:');
   console.log('Admin: admin@commerceflow.com / admin123');
   console.log('User: user@commerceflow.com / user123');
 }

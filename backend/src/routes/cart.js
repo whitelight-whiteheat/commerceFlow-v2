@@ -42,6 +42,13 @@ router.get('/', async (req, res) => {
   }
 });
 
+// Add GET /info for demo
+router.get('/info', (req, res) => {
+  res.json({
+    message: 'GET /api/cart returns the user cart (requires auth). Use POST, PUT, DELETE for cart actions.'
+  });
+});
+
 // Add item to cart
 router.post('/add', [
   body('productId').isString(),

@@ -12,75 +12,37 @@ import {
   CheckCircle,
   XCircle
 } from 'lucide-react';
-import { cn } from '../utils/cn';
+import { cn } from '../lib/utils';
+import { allProducts, getAllCategories } from '../lib/productData';
 
-// Mock products data (replace with API calls)
-const mockProducts = [
-  {
-    id: 1,
-    name: "Wireless Bluetooth Headphones",
-    price: 89.99,
-    stock: 45,
-    category: "Electronics",
-    status: "active",
-    image: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=400&fit=crop",
-    createdAt: "2024-01-10"
-  },
-  {
-    id: 2,
-    name: "Premium Coffee Maker",
-    price: 199.99,
-    stock: 12,
-    category: "Home & Kitchen",
-    status: "active",
-    image: "https://images.unsplash.com/photo-1517668808822-9ebb02f2a0e6?w=400&h=400&fit=crop",
-    createdAt: "2024-01-08"
-  },
-  {
-    id: 3,
-    name: "Smart Fitness Watch",
-    price: 299.99,
-    stock: 0,
-    category: "Electronics",
-    status: "inactive",
-    image: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400&h=400&fit=crop",
-    createdAt: "2024-01-05"
-  },
-  {
-    id: 4,
-    name: "Organic Cotton T-Shirt",
-    price: 29.99,
-    stock: 78,
-    category: "Clothing",
-    status: "active",
-    image: "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=400&h=400&fit=crop",
-    createdAt: "2024-01-12"
-  },
-  {
-    id: 5,
-    name: "Wireless Charging Pad",
-    price: 49.99,
-    stock: 23,
-    category: "Electronics",
-    status: "active",
-    image: "https://images.unsplash.com/photo-1586953208448-b95a79798f07?w=400&h=400&fit=crop",
-    createdAt: "2024-01-15"
-  }
-];
+// Convert centralized product data to admin format
+const convertToAdminFormat = (products) => {
+  return products.map(product => ({
+    id: product.id,
+    name: product.name,
+    price: product.price,
+    stock: product.inStock ? Math.floor(Math.random() * 100) + 10 : 0, // Mock stock based on inStock
+    category: product.category,
+    status: product.inStock ? "active" : "inactive",
+    image: product.image,
+    createdAt: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] // Random date within last 30 days
+  }));
+};
 
-const categories = ["All", "Electronics", "Home & Kitchen", "Clothing", "Sports", "Books"];
+const adminProducts = convertToAdminFormat(allProducts);
+const categories = getAllCategories();
 
 export default function AdminProducts() {
-  const [products, setProducts] = useState(mockProducts);
-  const [filteredProducts, setFilteredProducts] = useState(mockProducts);
+  const [products, setProducts] = useState(adminProducts);
+  const [filteredProducts, setFilteredProducts] = useState(adminProducts);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [selectedStatus, setSelectedStatus] = useState('All');
   const [sortBy, setSortBy] = useState('name');
   const [selectedProducts, setSelectedProducts] = useState([]);
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [editingProduct, setEditingProduct] = useState(null);
+  const [_isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [_isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [_editingProduct, setEditingProduct] = useState(null);
 
   // Filter and sort products
   useEffect(() => {
@@ -107,7 +69,7 @@ export default function AdminProducts() {
 
     setFilteredProducts(filtered);
   }, [products, searchTerm, selectedCategory, selectedStatus, sortBy]);
-
+//select product
   const handleSelectProduct = (productId) => {
     setSelectedProducts(prev => 
       prev.includes(productId) 
@@ -115,7 +77,7 @@ export default function AdminProducts() {
         : [...prev, productId]
     );
   };
-
+//select all
   const handleSelectAll = () => {
     if (selectedProducts.length === filteredProducts.length) {
       setSelectedProducts([]);
@@ -123,7 +85,7 @@ export default function AdminProducts() {
       setSelectedProducts(filteredProducts.map(p => p.id));
     }
   };
-
+//delete selected
   const handleDeleteSelected = () => {
     if (window.confirm(`Are you sure you want to delete ${selectedProducts.length} products?`)) {
       setProducts(prev => prev.filter(p => !selectedProducts.includes(p.id)));
@@ -136,12 +98,12 @@ export default function AdminProducts() {
       setProducts(prev => prev.filter(p => p.id !== productId));
     }
   };
-
+//edit product
   const handleEditProduct = (product) => {
     setEditingProduct(product);
     setIsEditModalOpen(true);
   };
-
+//get status color
   const getStatusColor = (status) => {
     switch (status) {
       case 'active': return 'bg-success-100 text-success-800';
@@ -149,7 +111,7 @@ export default function AdminProducts() {
       default: return 'bg-neutral-100 text-neutral-800';
     }
   };
-
+//get stock color
   const getStockColor = (stock) => {
     if (stock === 0) return 'text-error-600';
     if (stock < 10) return 'text-warning-600';
@@ -168,11 +130,11 @@ export default function AdminProducts() {
               </div>
               <h1 className="text-xl font-bold text-neutral-900">Product Management</h1>
             </div>
-            
+            {/* add product */}
             <button
               onClick={() => setIsAddModalOpen(true)}
               className="flex items-center space-x-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
-            >
+            
               <Plus size={16} />
               <span>Add Product</span>
             </button>
@@ -199,7 +161,7 @@ export default function AdminProducts() {
             </div>
 
             {/* Category Filter */}
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
               <Filter className="text-neutral-400" size={20} />
               <select
                 value={selectedCategory}
@@ -213,22 +175,21 @@ export default function AdminProducts() {
             </div>
 
             {/* Status Filter */}
-            <div className="flex items-center gap-4">
-              <span className="text-neutral-600">Status:</span>
+            <div className="flex items-center gap-2">
               <select
                 value={selectedStatus}
                 onChange={(e) => setSelectedStatus(e.target.value)}
                 className="px-4 py-3 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
               >
-                <option value="All">All</option>
+                <option value="All">All Status</option>
                 <option value="active">Active</option>
                 <option value="inactive">Inactive</option>
               </select>
             </div>
 
             {/* Sort */}
-            <div className="flex items-center gap-4">
-              <span className="text-neutral-600">Sort by:</span>
+            <div className="flex items-center gap-2">
+              <ArrowUpDown className="text-neutral-400" size={20} />
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
@@ -237,7 +198,7 @@ export default function AdminProducts() {
                 <option value="name">Name</option>
                 <option value="price">Price</option>
                 <option value="stock">Stock</option>
-                <option value="createdAt">Date Created</option>
+                <option value="createdAt">Date</option>
               </select>
             </div>
           </div>
@@ -250,13 +211,13 @@ export default function AdminProducts() {
               <span className="text-sm text-neutral-600">
                 {selectedProducts.length} product(s) selected
               </span>
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center gap-2">
                 <button
                   onClick={handleDeleteSelected}
-                  className="flex items-center space-x-2 px-3 py-2 text-error-600 hover:bg-error-50 rounded-lg transition-colors"
+                  className="flex items-center gap-2 px-3 py-2 text-error-600 hover:bg-error-50 rounded-lg transition-colors"
                 >
                   <Trash2 size={16} />
-                  <span>Delete Selected</span>
+                  Delete Selected
                 </button>
               </div>
             </div>
@@ -288,7 +249,7 @@ export default function AdminProducts() {
               </thead>
               <tbody className="divide-y divide-neutral-200">
                 {filteredProducts.map(product => (
-                  <tr key={product.id} className="hover:bg-neutral-50 transition-colors">
+                  <tr key={product.id} className="hover:bg-neutral-50">
                     <td className="px-6 py-4">
                       <input
                         type="checkbox"
@@ -298,15 +259,14 @@ export default function AdminProducts() {
                       />
                     </td>
                     <td className="px-6 py-4">
-                      <div className="flex items-center space-x-3">
+                      <div className="flex items-center gap-3">
                         <img
                           src={product.image}
                           alt={product.name}
-                          className="w-12 h-12 rounded-lg object-cover"
+                          className="w-10 h-10 rounded-lg object-cover"
                         />
                         <div>
-                          <p className="font-medium text-neutral-900">{product.name}</p>
-                          <p className="text-sm text-neutral-500">ID: {product.id}</p>
+                          <div className="font-medium text-neutral-900">{product.name}</div>
                         </div>
                       </div>
                     </td>
@@ -322,7 +282,7 @@ export default function AdminProducts() {
                       </span>
                     </td>
                     <td className="px-6 py-4">
-                      <span className={cn("px-2 py-1 rounded-full text-xs font-medium", getStatusColor(product.status))}>
+                      <span className={cn("px-2 py-1 text-xs font-medium rounded-full", getStatusColor(product.status))}>
                         {product.status}
                       </span>
                     </td>
@@ -330,16 +290,16 @@ export default function AdminProducts() {
                       <span className="text-sm text-neutral-600">{product.createdAt}</span>
                     </td>
                     <td className="px-6 py-4">
-                      <div className="flex items-center space-x-2">
+                      <div className="flex items-center gap-2">
                         <button
                           onClick={() => handleEditProduct(product)}
-                          className="p-2 text-neutral-600 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
+                          className="p-1 text-neutral-400 hover:text-neutral-600 transition-colors"
                         >
                           <Edit size={16} />
                         </button>
                         <button
                           onClick={() => handleDeleteProduct(product.id)}
-                          className="p-2 text-neutral-600 hover:text-error-600 hover:bg-error-50 rounded-lg transition-colors"
+                          className="p-1 text-neutral-400 hover:text-error-600 transition-colors"
                         >
                           <Trash2 size={16} />
                         </button>
@@ -350,49 +310,19 @@ export default function AdminProducts() {
               </tbody>
             </table>
           </div>
-
-          {/* Empty State */}
-          {filteredProducts.length === 0 && (
-            <div className="text-center py-12">
-              <Package className="mx-auto text-neutral-400 mb-4" size={48} />
-              <h3 className="text-lg font-medium text-neutral-900 mb-2">No products found</h3>
-              <p className="text-neutral-600">Try adjusting your search or filter criteria</p>
-            </div>
-          )}
         </div>
 
-        {/* Results Count */}
-        <div className="mt-6 text-sm text-neutral-600">
-          Showing {filteredProducts.length} of {products.length} products
-        </div>
+        {/* Empty state */}
+        {filteredProducts.length === 0 && (
+          <div className="text-center py-12">
+            <Package className="mx-auto h-12 w-12 text-neutral-400" />
+            <h3 className="mt-2 text-sm font-medium text-neutral-900">No products found</h3>
+            <p className="mt-1 text-sm text-neutral-500">Try adjusting your search or filter criteria.</p>
+          </div>
+        )}
       </div>
 
-      {/* Add/Edit Product Modal would go here */}
-      {/* For now, we'll just show a placeholder */}
-      {(isAddModalOpen || isEditModalOpen) && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-xl p-6 w-full max-w-md">
-            <h2 className="text-xl font-semibold mb-4">
-              {isAddModalOpen ? 'Add New Product' : 'Edit Product'}
-            </h2>
-            <p className="text-neutral-600 mb-4">
-              Product form will be implemented here with full CRUD functionality.
-            </p>
-            <div className="flex space-x-3">
-              <button
-                onClick={() => {
-                  setIsAddModalOpen(false);
-                  setIsEditModalOpen(false);
-                  setEditingProduct(null);
-                }}
-                className="flex-1 px-4 py-2 bg-neutral-200 text-neutral-700 rounded-lg hover:bg-neutral-300 transition-colors"
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Add/Edit Modals would go here */}
     </div>
   );
 } 

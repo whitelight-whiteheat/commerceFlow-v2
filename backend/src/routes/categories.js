@@ -31,6 +31,13 @@ router.get('/', async (req, res) => {
   }
 });
 
+// Add GET /info for demo
+router.get('/info', (req, res) => {
+  res.json({
+    message: 'GET /api/categories returns all categories. Use POST, PUT, DELETE for admin actions.'
+  });
+});
+
 // Get single category with products
 router.get('/:id', async (req, res) => {
   try {

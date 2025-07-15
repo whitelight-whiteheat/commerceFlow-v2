@@ -70,6 +70,13 @@ router.get('/:id', async (req, res) => {
   }
 });
 
+// Add GET /info for demo
+router.get('/info', (req, res) => {
+  res.json({
+    message: 'GET /api/orders returns user orders (requires auth). Use POST, PUT, DELETE for order actions.'
+  });
+});
+
 // Create order from cart
 router.post('/create', [
   body('shippingAddress').isObject(),

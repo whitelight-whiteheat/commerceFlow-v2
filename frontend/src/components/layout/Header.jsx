@@ -8,12 +8,11 @@ import {
   X, 
   LogOut,
   Settings,
-  Package,
-  Heart
+  Package
 } from 'lucide-react';
 import { useAuthStore } from '../../stores/authStore';
 import { useCartStore } from '../../stores/cartStore';
-import { cn } from '../../utils/cn';
+import { cn } from '../../lib/utils';
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);

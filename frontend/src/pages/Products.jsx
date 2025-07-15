@@ -1,81 +1,18 @@
 import { useState, useEffect } from 'react';
 import { Search, Filter, Grid, List } from 'lucide-react';
-import { cn } from '../utils/cn';
+import { cn } from '../lib/utils';
 import { Link, useLocation } from 'react-router-dom';
+import { allProducts, getAllCategories } from '../lib/productData';
 
-// Mock products data (replace with API call later)
-const mockProducts = [
-  {
-    id: 1,
-    name: "Wireless Bluetooth Headphones",
-    price: 89.99,
-    image: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=400&fit=crop",
-    category: "Electronics",
-    rating: 4.5,
-    reviews: 128,
-    inStock: true
-  },
-  {
-    id: 2,
-    name: "Premium Coffee Maker",
-    price: 199.99,
-    image: "https://images.unsplash.com/photo-1517668808822-9ebb02f2a0e6?w=400&h=400&fit=crop",
-    category: "Home & Kitchen",
-    rating: 4.8,
-    reviews: 89,
-    inStock: true
-  },
-  {
-    id: 3,
-    name: "Smart Fitness Watch",
-    price: 299.99,
-    image: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400&h=400&fit=crop",
-    category: "Electronics",
-    rating: 4.6,
-    reviews: 256,
-    inStock: false
-  },
-  {
-    id: 4,
-    name: "Organic Cotton T-Shirt",
-    price: 29.99,
-    image: "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=400&h=400&fit=crop",
-    category: "Clothing",
-    rating: 4.3,
-    reviews: 67,
-    inStock: true
-  },
-  {
-    id: 5,
-    name: "Wireless Charging Pad",
-    price: 49.99,
-    image: "https://images.unsplash.com/photo-1586953208448-b95a79798f07?w=400&h=400&fit=crop",
-    category: "Electronics",
-    rating: 4.4,
-    reviews: 94,
-    inStock: true
-  },
-  {
-    id: 6,
-    name: "Stainless Steel Water Bottle",
-    price: 24.99,
-    image: "https://images.unsplash.com/photo-1602143407151-7111542de6e8?w=400&h=400&fit=crop",
-    category: "Home & Kitchen",
-    rating: 4.7,
-    reviews: 156,
-    inStock: true
-  }
-];
-
-const categories = ["All", "Electronics", "Home & Kitchen", "Clothing", "Sports", "Books"];
-
+//products page
 export default function Products() {
-  const [products, setProducts] = useState(mockProducts);
+  const [products] = useState(allProducts);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'list'
   const [sortBy, setSortBy] = useState('name'); // 'name', 'price', 'rating'
   const location = useLocation();
+  const categories = getAllCategories();
 
   // On mount, set category from query param if present
   useEffect(() => {
@@ -84,7 +21,7 @@ export default function Products() {
     if (cat && categories.includes(cat)) {
       setSelectedCategory(cat);
     }
-  }, [location.search]);
+  }, [location.search, categories]);
 
   // Filter and sort products
   const filteredProducts = products
@@ -246,6 +183,16 @@ function ProductCard({ product }) {
             Out of Stock
           </div>
         )}
+        {product.isNew && (
+          <div className="absolute top-2 left-2 bg-green-500 text-white px-2 py-1 rounded-full text-xs font-medium">
+            New
+          </div>
+        )}
+        {product.discount && (
+          <div className="absolute top-2 left-2 bg-red-500 text-white px-2 py-1 rounded-full text-xs font-medium">
+            {product.discount}% OFF
+          </div>
+        )}
       </div>
       
       <div className="p-4">
@@ -280,7 +227,12 @@ function ProductCard({ product }) {
         </div>
         
         <div className="flex items-center justify-between">
-          <span className="text-xl font-bold text-neutral-900">${product.price}</span>
+          <div className="flex items-center gap-2">
+            <span className="text-xl font-bold text-neutral-900">${product.price}</span>
+            {product.originalPrice && (
+              <span className="text-sm text-neutral-400 line-through">${product.originalPrice}</span>
+            )}
+          </div>
           <button
             disabled={!product.inStock}
             className={cn(
@@ -311,6 +263,16 @@ function ProductListItem({ product }) {
         {!product.inStock && (
           <div className="absolute top-1 right-1 bg-error-500 text-white px-1 py-0.5 rounded text-xs">
             Out
+          </div>
+        )}
+        {product.isNew && (
+          <div className="absolute top-1 left-1 bg-green-500 text-white px-1 py-0.5 rounded text-xs">
+            New
+          </div>
+        )}
+        {product.discount && (
+          <div className="absolute top-1 left-1 bg-red-500 text-white px-1 py-0.5 rounded text-xs">
+            {product.discount}%
           </div>
         )}
       </div>
@@ -346,7 +308,12 @@ function ProductListItem({ product }) {
       </div>
       
       <div className="flex flex-col items-end justify-between">
-        <span className="text-xl font-bold text-neutral-900">${product.price}</span>
+        <div className="flex items-center gap-2">
+          <span className="text-xl font-bold text-neutral-900">${product.price}</span>
+          {product.originalPrice && (
+            <span className="text-sm text-neutral-400 line-through">${product.originalPrice}</span>
+          )}
+        </div>
         <button
           disabled={!product.inStock}
           className={cn(

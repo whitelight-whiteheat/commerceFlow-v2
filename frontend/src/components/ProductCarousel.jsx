@@ -1,8 +1,7 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import '../App.css'; // For smooth scroll if needed
 import '../index.css';
 import { Link } from 'react-router-dom';
-import { cn } from '../utils/cn';
+import { cn } from '../lib/utils';
 
 // Inline ProductCard (copied from Products.jsx for reuse)
 function ProductCard({ product }) {

@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { api } from '../lib/api';
 import toast from 'react-hot-toast';
+import { useAuthStore } from './authStore';
 
 export const useCartStore = create(
   persist(

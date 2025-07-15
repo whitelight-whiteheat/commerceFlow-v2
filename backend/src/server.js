@@ -26,13 +26,7 @@ const prisma = new PrismaClient();
 // CRITICAL FIX: Use Railway's injected port, no fallback
 const PORT = process.env.PORT;
 
-// Debug environment variables
-console.log('🔍 Environment Debug:');
-console.log('PORT:', PORT);
-console.log('NODE_ENV:', process.env.NODE_ENV);
-console.log('DATABASE_URL exists:', !!process.env.DATABASE_URL);
-console.log('JWT_SECRET exists:', !!process.env.JWT_SECRET);
-console.log('FRONTEND_URL:', process.env.FRONTEND_URL);
+// Environment validation
 
 if (!PORT) {
   console.error('❌ PORT environment variable is required');
@@ -95,6 +89,32 @@ app.get('/test-db', async (req, res) => {
   }
 });
 
+// API Docs endpoint for demo/portfolio
+app.get('/api/docs', (req, res) => {
+  res.json({
+    message: 'CommerceFlow API Documentation',
+    endpoints: {
+      health: '/health',
+      products: '/api/products',
+      categories: '/api/categories',
+      auth: {
+        register: '/api/auth/register (POST)',
+        login: '/api/auth/login (POST)',
+        me: '/api/auth/me (GET, requires auth)'
+      },
+      cart: '/api/cart (requires auth)',
+      orders: '/api/orders (requires auth)',
+      reviews: '/api/reviews',
+      users: '/api/users (admin only)'
+    },
+    demoAccounts: {
+      admin: 'admin@commerceflow.com / admin123',
+      user: 'user@commerceflow.com / user123'
+    },
+    note: 'For POST endpoints, use JSON body as described in the README.'
+  });
+});
+
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
@@ -111,23 +131,15 @@ app.use(errorHandler);
 // Start server
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`📊 Health check: https://commerceflow-v2-production.up.railway.app/health`);
-  console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`🔗 Database: ${process.env.DATABASE_URL ? 'Connected' : 'Missing DATABASE_URL'}`);
-  console.log(`🔐 JWT: ${process.env.JWT_SECRET ? 'Configured' : 'Missing JWT_SECRET'}`);
-  console.log(`🎯 Root endpoint: https://commerceflow-v2-production.up.railway.app/`);
-  console.log(`🔌 API endpoints: https://commerceflow-v2-production.up.railway.app/api/`);
 });
 
 // Graceful shutdown
 process.on('SIGTERM', async () => {
-  console.log('SIGTERM received, shutting down gracefully');
   await prisma.$disconnect();
   process.exit(0);
 });
 
 process.on('SIGINT', async () => {
-  console.log('SIGINT received, shutting down gracefully');
   await prisma.$disconnect();
   process.exit(0);
 });

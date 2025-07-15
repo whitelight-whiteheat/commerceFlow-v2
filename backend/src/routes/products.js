@@ -110,6 +110,13 @@ router.get('/', [
   }
 });
 
+// Add GET /info for demo
+router.get('/info', (req, res) => {
+  res.json({
+    message: 'GET /api/products returns all products. Use POST, PUT, DELETE for admin actions.'
+  });
+});
+
 // Get single product
 router.get('/:id', async (req, res) => {
   try {

@@ -146,6 +146,13 @@ router.put('/:id/role', requireAdmin, async (req, res) => {
   }
 });
 
+// Add GET /info for demo
+router.get('/info', (req, res) => {
+  res.json({
+    message: 'GET /api/users returns user info (admin only). Use POST, PUT, DELETE for user actions.'
+  });
+});
+
 // Get user statistics (for current user)
 router.get('/me/stats', async (req, res) => {
   try {

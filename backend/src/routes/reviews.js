@@ -212,4 +212,11 @@ router.get('/user/me', authenticateToken, async (req, res) => {
   }
 });
 
+// Add GET /info for demo
+router.get('/info', (req, res) => {
+  res.json({
+    message: 'GET /api/reviews returns reviews. Use POST, PUT, DELETE for review actions.'
+  });
+});
+
 export default router; 

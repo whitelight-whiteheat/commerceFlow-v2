@@ -14,7 +14,7 @@ import {
   ArrowDownRight
 } from 'lucide-react';
 import { useAuthStore } from '../stores/authStore';
-import { cn } from '../utils/cn';
+import { cn } from '../lib/utils';
 
 // Mock analytics data (replace with API calls)
 const mockAnalytics = {
