@@ -79,23 +79,11 @@ app.get('/health', (req, res) => {
   });
 });
 
-// Test database connection
-app.get('/test-db', async (req, res) => {
-  try {
-    await prisma.$connect();
-    res.json({ status: 'Database connected successfully' });
-  } catch (error) {
-    console.error('Database connection error:', error);
-    res.status(500).json({ error: 'Database connection failed', details: error.message });
-  }
-});
-
-// API root endpoint
+// API base endpoint
 app.get('/api', (req, res) => {
   res.json({
     message: 'CommerceFlow API',
     version: '1.0.0',
-    status: 'running',
     endpoints: {
       auth: '/api/auth',
       products: '/api/products',
@@ -106,8 +94,20 @@ app.get('/api', (req, res) => {
       users: '/api/users',
       analytics: '/api/analytics'
     },
-    timestamp: new Date().toISOString()
+    docs: '/api/docs',
+    health: '/health'
   });
+});
+
+// Test database connection
+app.get('/test-db', async (req, res) => {
+  try {
+    await prisma.$connect();
+    res.json({ status: 'Database connected successfully' });
+  } catch (error) {
+    console.error('Database connection error:', error);
+    res.status(500).json({ error: 'Database connection failed', details: error.message });
+  }
 });
 
 // API Docs endpoint for demo/portfolio
