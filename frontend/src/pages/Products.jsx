@@ -1,14 +1,16 @@
 import { useState, useEffect } from 'react';
-import { Search, Filter, Grid, List, Star, Heart, ShoppingCart, Eye } from 'lucide-react';
+import { Search, Filter, Grid, List, Star, Heart, ShoppingCart, Eye, Loader2 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { Link, useLocation } from 'react-router-dom';
-import { allProducts, getAllCategories } from '../lib/productData';
+import { productApi } from '../lib/productApi';
 import { useCartStore } from '../stores/cartStore';
 import toast from 'react-hot-toast';
 
 //products page
 export default function Products() {
-  const [products] = useState(allProducts);
+  const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'list'
@@ -16,8 +18,33 @@ export default function Products() {
   const [priceRange, setPriceRange] = useState([0, 1000]);
   const [showFilters, setShowFilters] = useState(false);
   const location = useLocation();
-  const categories = getAllCategories();
   const { addToCart } = useCartStore();
+
+  // Fetch products and categories on mount
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setIsLoading(true);
+        const [productsData, categoriesData] = await Promise.all([
+          productApi.getAllProducts(),
+          productApi.getCategories()
+        ]);
+        
+        setProducts(Array.isArray(productsData) ? productsData : productsData.products || []);
+        const categoryArray = Array.isArray(categoriesData)
+          ? categoriesData
+          : categoriesData.categories;
+        setCategories(categoryArray.map(cat => cat.name));
+      } catch (error) {
+        console.error('Failed to fetch data:', error);
+        toast.error('Failed to load products');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
 
   // On mount, set category from query param if present
   useEffect(() => {
@@ -32,7 +59,7 @@ export default function Products() {
   const filteredProducts = products
     .filter(product => {
       const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesCategory = selectedCategory === 'All' || product.category === selectedCategory;
+      const matchesCategory = selectedCategory === 'All' || product.category?.name === selectedCategory;
       const matchesPrice = product.price >= priceRange[0] && product.price <= priceRange[1];
       return matchesSearch && matchesCategory && matchesPrice;
     })
@@ -54,13 +81,25 @@ export default function Products() {
   const handleAddToCart = (e, product) => {
     e.preventDefault();
     e.stopPropagation();
-    if (product.inStock) {
-      addToCart(product, 1);
+    if (product.stock > 0) {
+      addToCart(product.id, 1);
       toast.success(`${product.name} added to cart`);
     } else {
       toast.error('Product is out of stock');
     }
   };
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-neutral-50 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="animate-spin mx-auto mb-4" size={48} />
+          <h2 className="text-xl font-semibold text-neutral-900">Loading products...</h2>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-neutral-50">
@@ -242,6 +281,14 @@ export default function Products() {
 function ProductCard({ product, onAddToCart }) {
   const [isHovered, setIsHovered] = useState(false);
 
+  // Get the first image or fallback
+  const getImageUrl = (product) => {
+    if (product.images && product.images.length > 0) {
+      return product.images[0].replace('http://', 'https://');
+    }
+    return 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=400&h=400&fit=crop';
+  };
+
   return (
     <div 
       className="bg-white rounded-xl shadow-soft hover:shadow-medium transition-all duration-200 overflow-hidden group relative"
@@ -251,25 +298,23 @@ function ProductCard({ product, onAddToCart }) {
       <Link to={`/products/${product.id}`}>
         <div className="relative aspect-square overflow-hidden">
           <img
-            src={product.image}
+            src={getImageUrl(product)}
             alt={product.name}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+            onError={(e) => {
+              e.target.src = 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=400&h=400&fit=crop';
+            }}
           />
           
           {/* Badges */}
-          {!product.inStock && (
+          {product.stock === 0 && (
             <div className="absolute top-2 right-2 bg-error-500 text-white px-2 py-1 rounded-full text-xs font-medium">
               Out of Stock
             </div>
           )}
-          {product.isNew && (
-            <div className="absolute top-2 left-2 bg-green-500 text-white px-2 py-1 rounded-full text-xs font-medium">
-              New
-            </div>
-          )}
-          {product.discount && (
-            <div className="absolute top-2 left-2 bg-red-500 text-white px-2 py-1 rounded-full text-xs font-medium">
-              {product.discount}% OFF
+          {product.stock > 0 && product.stock < 10 && (
+            <div className="absolute top-2 left-2 bg-yellow-500 text-white px-2 py-1 rounded-full text-xs font-medium">
+              Low Stock
             </div>
           )}
 
@@ -304,7 +349,7 @@ function ProductCard({ product, onAddToCart }) {
       <div className="p-4">
         <div className="flex items-center gap-2 mb-2">
           <span className="text-xs font-medium text-primary-600 bg-primary-100 px-2 py-1 rounded-full">
-            {product.category}
+            {product.category?.name || 'General'}
           </span>
         </div>
         
@@ -319,7 +364,7 @@ function ProductCard({ product, onAddToCart }) {
                 key={i}
                 className={cn(
                   "w-4 h-4",
-                  i < Math.floor(product.rating) 
+                  i < Math.floor(product.averageRating || 0) 
                     ? "text-accent-500 fill-current" 
                     : "text-neutral-300"
                 )}
@@ -329,26 +374,23 @@ function ProductCard({ product, onAddToCart }) {
               </svg>
             ))}
           </div>
-          <span className="text-sm text-neutral-600">({product.reviews})</span>
+          <span className="text-sm text-neutral-600">({product.reviewCount || 0})</span>
         </div>
         
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="text-xl font-bold text-neutral-900">${product.price}</span>
-            {product.originalPrice && (
-              <span className="text-sm text-neutral-400 line-through">${product.originalPrice}</span>
-            )}
           </div>
           <button
-            disabled={!product.inStock}
+            disabled={product.stock === 0}
             className={cn(
               "px-4 py-2 rounded-lg font-medium transition-colors",
-              product.inStock
+              product.stock > 0
                 ? "bg-primary-600 text-white hover:bg-primary-700"
                 : "bg-neutral-200 text-neutral-500 cursor-not-allowed"
             )}
           >
-            {product.inStock ? 'Add to Cart' : 'Out of Stock'}
+            {product.stock > 0 ? 'Add to Cart' : 'Out of Stock'}
           </button>
         </div>
       </div>
@@ -358,13 +400,24 @@ function ProductCard({ product, onAddToCart }) {
 
 // Product List Item Component (List View)
 function ProductListItem({ product }) {
+  // Get the first image or fallback
+  const getImageUrl = (product) => {
+    if (product.images && product.images.length > 0) {
+      return product.images[0].replace('http://', 'https://');
+    }
+    return 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=400&h=400&fit=crop';
+  };
+
   return (
     <div className="bg-white rounded-xl shadow-soft p-6 flex gap-6">
       <div className="relative w-24 h-24 flex-shrink-0">
         <img
-          src={product.image}
+          src={getImageUrl(product)}
           alt={product.name}
           className="w-full h-full object-cover rounded-lg"
+          onError={(e) => {
+            e.target.src = 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=400&h=400&fit=crop';
+          }}
         />
         {!product.inStock && (
           <div className="absolute top-1 right-1 bg-error-500 text-white px-1 py-0.5 rounded text-xs">

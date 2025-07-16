@@ -32,7 +32,7 @@ const StatCard = ({ title, value, icon: Icon, change, color = 'blue' }) => {
       <div>
         <p className="text-sm font-medium text-gray-600">{title}</p>
         <p className="text-2xl font-bold text-gray-900">{value}</p>
-        {change && (
+        {change !== undefined && (
           <p className={`text-sm ${change >= 0 ? 'text-green-600' : 'text-red-600'}`}>
             {change >= 0 ? '+' : ''}{change}% from last month
           </p>
@@ -47,16 +47,22 @@ const StatCard = ({ title, value, icon: Icon, change, color = 'blue' }) => {
 };
 
 const TABS = [
+  { key: 'overview', label: 'Overview' },
   { key: 'sales', label: 'Sales Analytics' },
   { key: 'users', label: 'User Analytics' },
   { key: 'products', label: 'Product Analytics' }
 ];
 
 const AdminAnalytics = () => {
-  const [activeTab, setActiveTab] = useState('sales');
+  const [activeTab, setActiveTab] = useState('overview');
+  // Overview analytics state
+  const [overview, setOverview] = useState(null);
+  const [overviewLoading, setOverviewLoading] = useState(true);
+  const [overviewError, setOverviewError] = useState(null);
+  
   // Sales analytics state
   const [sales, setSales] = useState(null);
-  const [salesLoading, setSalesLoading] = useState(true);
+  const [salesLoading, setSalesLoading] = useState(false);
   const [salesError, setSalesError] = useState(null);
   const [dateRange, setDateRange] = useState({ start: '', end: '' });
   const [category, setCategory] = useState('');
@@ -82,8 +88,8 @@ const AdminAnalytics = () => {
           api.get('/categories'),
           api.get('/products')
         ]);
-        setCategories(catRes.data.categories || []);
-        setProductsList(prodRes.data.products || []);
+        setCategories(catRes.data.categories || catRes.data || []);
+        setProductsList(prodRes.data.products || prodRes.data || []);
       } catch {
         // ignore
       }
@@ -119,6 +125,20 @@ const AdminAnalytics = () => {
     }
   };
 
+  // Fetch overview analytics
+  const fetchOverview = async () => {
+    try {
+      setOverviewLoading(true);
+      const res = await api.get('/analytics/overview');
+      setOverview(res.data.overview);
+      setOverviewError(null);
+    } catch {
+      setOverviewError('Failed to fetch overview analytics');
+    } finally {
+      setOverviewLoading(false);
+    }
+  };
+
   // Fetch products analytics
   const fetchProducts = async () => {
     try {
@@ -142,6 +162,11 @@ const AdminAnalytics = () => {
     if (productId) params.productId = productId;
     fetchSales(params);
   }, [dateRange, category, productId]);
+
+  // Initial fetch for overview
+  useEffect(() => {
+    fetchOverview();
+  }, []);
 
   // Fetch data when tab changes
   useEffect(() => {
@@ -204,7 +229,104 @@ const AdminAnalytics = () => {
 
   // Tab content
   let tabContent = null;
-  if (activeTab === 'sales') {
+  if (activeTab === 'overview') {
+    tabContent = (
+      <div>
+        {overviewLoading ? (
+          <div className="flex items-center justify-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+          </div>
+        ) : overviewError ? (
+          <div className="text-center py-8">
+            <p className="text-red-600 mb-4">{overviewError}</p>
+            <button
+              onClick={fetchOverview}
+              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+            >
+              Retry
+            </button>
+          </div>
+        ) : overview ? (
+          <>
+            {/* Key Metrics */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+              <StatCard
+                title="Total Orders"
+                value={formatNumber(overview.totalOrders)}
+                icon={ShoppingCart}
+                change={overview.orderGrowth}
+                color="blue"
+              />
+              <StatCard
+                title="Total Revenue"
+                value={formatCurrency(overview.totalRevenue)}
+                icon={DollarSign}
+                change={overview.revenueGrowth}
+                color="green"
+              />
+              <StatCard
+                title="Total Users"
+                value={formatNumber(overview.totalUsers)}
+                icon={Users}
+                color="purple"
+              />
+              <StatCard
+                title="Active Products"
+                value={formatNumber(overview.totalProducts)}
+                icon={Package}
+                color="orange"
+              />
+            </div>
+
+            {/* Top Products */}
+            <div className="bg-white rounded-lg shadow p-6 mb-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Top Selling Products</h3>
+              <div className="space-y-3">
+                {overview.topProducts.map((product, index) => (
+                  <div key={product.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                        <span className="text-blue-600 font-medium text-sm">{index + 1}</span>
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-900">{product.name}</p>
+                        <p className="text-sm text-gray-600">{product.category}</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-medium text-gray-900">{formatNumber(product.totalSold)} sold</p>
+                      <p className="text-sm text-gray-600">{formatCurrency(product.price)} each</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Recent Orders */}
+            <div className="bg-white rounded-lg shadow p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Orders</h3>
+              <div className="space-y-3">
+                {overview.recentOrders.map((order) => (
+                  <div key={order.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div>
+                      <p className="font-medium text-gray-900">
+                        {order.user.firstName} {order.user.lastName}
+                      </p>
+                      <p className="text-sm text-gray-600">{order.user.email}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-medium text-gray-900">{formatCurrency(order.total)}</p>
+                      <p className="text-sm text-gray-600">{order.status}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </>
+        ) : <div>No overview data available</div>}
+      </div>
+    );
+  } else if (activeTab === 'sales') {
     tabContent = (
       <div>
         {Filters}

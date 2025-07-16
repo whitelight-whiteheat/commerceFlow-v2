@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { api } from '../lib/api';
-// import toast from 'react-hot-toast';
+import toast from 'react-hot-toast';
 
 export default function AdminCustomers() {
   const [customers, setCustomers] = useState([]);
@@ -35,105 +35,13 @@ export default function AdminCustomers() {
 
   const loadCustomers = async () => {
     try {
-      const response = await api.get('/users/customers'); // We'll need to create this endpoint
-      setCustomers(response.data.customers || []);
-      setFilteredCustomers(response.data.customers || []);
+      setIsLoading(true);
+      const response = await api.get('/users');
+      setCustomers(response.data.users || []);
+      setFilteredCustomers(response.data.users || []);
     } catch (error) {
       console.error('Failed to load customers:', error);
-      // For now, use mock data
-      const mockCustomers = [
-        {
-          id: '1',
-          firstName: 'John',
-          lastName: 'Doe',
-          email: 'john@example.com',
-          phone: '+1 (555) 123-4567',
-          address: {
-            street: '123 Main St',
-            city: 'New York',
-            state: 'NY',
-            zipCode: '10001',
-            country: 'USA'
-          },
-          createdAt: '2024-01-01T10:00:00Z',
-          totalOrders: 5,
-          totalSpent: 1249.95,
-          lastOrderDate: '2024-01-15T10:30:00Z',
-          status: 'active',
-          orders: [
-            { id: '1', total: 299.99, status: 'DELIVERED', date: '2024-01-15' },
-            { id: '2', total: 149.50, status: 'PROCESSING', date: '2024-01-10' }
-          ]
-        },
-        {
-          id: '2',
-          firstName: 'Jane',
-          lastName: 'Smith',
-          email: 'jane@example.com',
-          phone: '+1 (555) 987-6543',
-          address: {
-            street: '456 Oak Ave',
-            city: 'Los Angeles',
-            state: 'CA',
-            zipCode: '90210',
-            country: 'USA'
-          },
-          createdAt: '2024-01-05T14:30:00Z',
-          totalOrders: 3,
-          totalSpent: 449.97,
-          lastOrderDate: '2024-01-14T15:45:00Z',
-          status: 'active',
-          orders: [
-            { id: '3', total: 199.99, status: 'SHIPPED', date: '2024-01-14' }
-          ]
-        },
-        {
-          id: '3',
-          firstName: 'Mike',
-          lastName: 'Johnson',
-          email: 'mike@example.com',
-          phone: '+1 (555) 456-7890',
-          address: {
-            street: '789 Pine Rd',
-            city: 'Chicago',
-            state: 'IL',
-            zipCode: '60601',
-            country: 'USA'
-          },
-          createdAt: '2024-01-10T09:15:00Z',
-          totalOrders: 2,
-          totalSpent: 179.98,
-          lastOrderDate: '2024-01-14T09:20:00Z',
-          status: 'active',
-          orders: [
-            { id: '4', total: 89.99, status: 'DELIVERED', date: '2024-01-14' }
-          ]
-        },
-        {
-          id: '4',
-          firstName: 'Sarah',
-          lastName: 'Wilson',
-          email: 'sarah@example.com',
-          phone: '+1 (555) 321-0987',
-          address: {
-            street: '321 Elm St',
-            city: 'Miami',
-            state: 'FL',
-            zipCode: '33101',
-            country: 'USA'
-          },
-          createdAt: '2024-01-12T16:45:00Z',
-          totalOrders: 1,
-          totalSpent: 199.99,
-          lastOrderDate: '2024-01-13T14:15:00Z',
-          status: 'inactive',
-          orders: [
-            { id: '5', total: 199.99, status: 'DELIVERED', date: '2024-01-13' }
-          ]
-        }
-      ];
-      setCustomers(mockCustomers);
-      setFilteredCustomers(mockCustomers);
+      toast.error('Failed to load customers');
     } finally {
       setIsLoading(false);
     }
@@ -145,7 +53,7 @@ export default function AdminCustomers() {
       const matchesSearch = 
         `${customer.firstName} ${customer.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
         customer.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        customer.phone.includes(searchTerm);
+        (customer.phone && customer.phone.includes(searchTerm));
       const matchesStatus = selectedStatus === 'All' || customer.status === selectedStatus;
       return matchesSearch && matchesStatus;
     });
@@ -156,9 +64,9 @@ export default function AdminCustomers() {
         case 'name':
           return `${a.firstName} ${a.lastName}`.localeCompare(`${b.firstName} ${b.lastName}`);
         case 'totalSpent':
-          return b.totalSpent - a.totalSpent;
+          return (b.totalSpent || 0) - (a.totalSpent || 0);
         case 'totalOrders':
-          return b.totalOrders - a.totalOrders;
+          return (b.totalOrders || 0) - (a.totalOrders || 0);
         case 'createdAt':
           return new Date(b.createdAt) - new Date(a.createdAt);
         default:
@@ -251,7 +159,7 @@ export default function AdminCustomers() {
             <div>
               <p className="text-sm font-medium text-neutral-600">Total Revenue</p>
               <p className="text-2xl font-bold text-neutral-900">
-                {formatCurrency(customers.reduce((sum, c) => sum + c.totalSpent, 0))}
+                {formatCurrency(customers.reduce((sum, c) => sum + (c.totalSpent || 0), 0))}
               </p>
             </div>
             <div className="w-12 h-12 bg-secondary-100 rounded-lg flex items-center justify-center">
@@ -265,10 +173,11 @@ export default function AdminCustomers() {
             <div>
               <p className="text-sm font-medium text-neutral-600">Avg Order Value</p>
               <p className="text-2xl font-bold text-neutral-900">
-                {formatCurrency(
-                  customers.reduce((sum, c) => sum + c.totalSpent, 0) / 
-                  customers.reduce((sum, c) => sum + c.totalOrders, 0)
-                )}
+                {(() => {
+                  const totalSpent = customers.reduce((sum, c) => sum + (c.totalSpent || 0), 0);
+                  const totalOrders = customers.reduce((sum, c) => sum + (c.totalOrders || 0), 0);
+                  return formatCurrency(totalOrders > 0 ? totalSpent / totalOrders : 0);
+                })()}
               </p>
             </div>
             <div className="w-12 h-12 bg-accent-100 rounded-lg flex items-center justify-center">
@@ -356,11 +265,11 @@ export default function AdminCustomers() {
               <div className="space-y-3 mb-4">
                 <div className="flex items-center gap-2 text-sm text-neutral-600">
                   <Phone size={14} />
-                  <span>{customer.phone}</span>
+                  <span>{customer.phone || 'N/A'}</span>
                 </div>
                 <div className="flex items-center gap-2 text-sm text-neutral-600">
                   <MapPin size={14} />
-                  <span>{customer.address.city}, {customer.address.state}</span>
+                  <span>Location not available</span>
                 </div>
                 <div className="flex items-center gap-2 text-sm text-neutral-600">
                   <Calendar size={14} />
@@ -379,7 +288,11 @@ export default function AdminCustomers() {
                 </div>
                 <div className="text-center">
                   <p className="text-lg font-semibold text-neutral-900">
-                    {formatCurrency(customer.totalSpent / customer.totalOrders)}
+                    {formatCurrency(
+                      (customer.totalOrders && customer.totalOrders > 0) 
+                        ? customer.totalSpent / customer.totalOrders 
+                        : 0
+                    )}
                   </p>
                   <p className="text-xs text-neutral-600">Avg Order</p>
                 </div>
@@ -446,7 +359,7 @@ export default function AdminCustomers() {
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
                       <p className="font-medium text-neutral-900">Phone</p>
-                      <p className="text-neutral-600">{selectedCustomer.phone}</p>
+                      <p className="text-neutral-600">{selectedCustomer.phone || 'N/A'}</p>
                     </div>
                     <div>
                       <p className="font-medium text-neutral-900">Status</p>
@@ -460,33 +373,29 @@ export default function AdminCustomers() {
                   </div>
 
                   <div>
-                    <p className="font-medium text-neutral-900 mb-2">Address</p>
-                    <p className="text-sm text-neutral-600">
-                      {selectedCustomer.address.street}<br />
-                      {selectedCustomer.address.city}, {selectedCustomer.address.state} {selectedCustomer.address.zipCode}<br />
-                      {selectedCustomer.address.country}
-                    </p>
+                    <p className="font-medium text-neutral-900 mb-2">Role</p>
+                    <p className="text-sm text-neutral-600 capitalize">{selectedCustomer.role.toLowerCase()}</p>
                   </div>
 
                   <div>
-                    <p className="font-medium text-neutral-900 mb-2">Order History</p>
-                    <div className="space-y-2">
-                      {selectedCustomer.orders.map(order => (
-                        <div key={order.id} className="flex items-center justify-between text-sm">
-                          <span className="text-neutral-600">Order #{order.id}</span>
-                          <div className="flex items-center gap-2">
-                            <span className="font-medium">{formatCurrency(order.total)}</span>
-                            <span className={cn(
-                              "px-2 py-1 rounded-full text-xs",
-                              order.status === 'DELIVERED' ? 'bg-green-100 text-green-800' :
-                              order.status === 'SHIPPED' ? 'bg-blue-100 text-blue-800' :
-                              'bg-yellow-100 text-yellow-800'
-                            )}>
-                              {order.status}
-                            </span>
-                          </div>
-                        </div>
-                      ))}
+                    <p className="font-medium text-neutral-900 mb-2">Statistics</p>
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <p className="text-neutral-600">Total Orders</p>
+                        <p className="font-medium">{selectedCustomer.totalOrders || 0}</p>
+                      </div>
+                      <div>
+                        <p className="text-neutral-600">Total Spent</p>
+                        <p className="font-medium">{formatCurrency(selectedCustomer.totalSpent || 0)}</p>
+                      </div>
+                      <div>
+                        <p className="text-neutral-600">Reviews</p>
+                        <p className="font-medium">{selectedCustomer.reviewCount || 0}</p>
+                      </div>
+                      <div>
+                        <p className="text-neutral-600">Member Since</p>
+                        <p className="font-medium">{formatDate(selectedCustomer.createdAt)}</p>
+                      </div>
                     </div>
                   </div>
                 </div>

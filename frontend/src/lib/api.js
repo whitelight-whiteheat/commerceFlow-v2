@@ -3,10 +3,15 @@ import { useAuthStore } from '../stores/authStore';
 import toast from 'react-hot-toast';
 
 // Environment variable for API URL
+const isDevelopment = import.meta.env.DEV;
+const apiUrl = import.meta.env.VITE_API_URL || (isDevelopment ? 'http://localhost:5000/api' : 'https://your-backend-url.onrender.com/api');
+
+console.log('Environment:', isDevelopment ? 'Development' : 'Production');
+console.log('API URL:', apiUrl);
 
 // Create axios instance
 export const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api',
+  baseURL: apiUrl,
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',

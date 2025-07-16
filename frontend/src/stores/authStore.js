@@ -38,8 +38,11 @@ export const useAuthStore = create(
       login: async (email, password) => {
         set({ isLoading: true });
         try {
+          console.log('🔐 Attempting login with:', { email, password: '***' });
           const response = await api.post('/auth/login', { email, password });
           const { user, token } = response.data;
+          
+          console.log('✅ Login successful:', { user: user.email, hasToken: !!token });
           
           set({
             user,
@@ -51,9 +54,12 @@ export const useAuthStore = create(
           // Set auth header for future requests
           api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
           
+          console.log('🔑 Auth header set:', api.defaults.headers.common['Authorization'] ? 'Yes' : 'No');
+          
           toast.success('Welcome back!');
           return { success: true };
         } catch (error) {
+          console.error('❌ Login failed:', error.response?.data || error.message);
           set({ isLoading: false });
           const message = error.response?.data?.message || 'Login failed';
           toast.error(message);

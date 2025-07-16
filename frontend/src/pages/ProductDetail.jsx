@@ -1,8 +1,8 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
-import { ShoppingCart, ArrowLeft, Star, Tag, Minus, Plus, CheckCircle } from 'lucide-react';
+import { ShoppingCart, ArrowLeft, Star, Tag, Minus, Plus, CheckCircle, X, Loader2 } from 'lucide-react';
 import { cn } from '../lib/utils';
-import { getProductById } from '../lib/productData';
+import { productApi } from '../lib/productApi';
 import { useCartStore } from '../stores/cartStore';
 import { useAuthStore } from '../stores/authStore';
 import toast from 'react-hot-toast';
@@ -10,15 +10,32 @@ import toast from 'react-hot-toast';
 export default function ProductDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [product, setProduct] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
-  const [isAddingToCart, setIsAddingToCart] = useState(false);
+  const [showCartPreview, setShowCartPreview] = useState(true);
   
-  const { addToCart, isInCart, getCartItem, updateQuantity } = useCartStore();
+  const { addToCart, isInCart, getCartItem, updateQuantity, removeFromCart, isLoading: cartLoading, getItemCount } = useCartStore();
   const { isAuthenticated } = useAuthStore();
-
-  // Find product by id using centralized data
-  const product = getProductById(id);
   
+  // Fetch product on mount
+  useEffect(() => {
+    const fetchProduct = async () => {
+      try {
+        setIsLoading(true);
+        const productData = await productApi.getProductById(id);
+        setProduct(productData.product || productData);
+      } catch (error) {
+        console.error('Failed to fetch product:', error);
+        toast.error('Failed to load product');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchProduct();
+  }, [id]);
+
   // Check if product is already in cart
   const cartItem = product ? getCartItem(product.id) : null;
   const isProductInCart = product ? isInCart(product.id) : false;
@@ -30,23 +47,40 @@ export default function ProductDetail() {
     }
   }, [cartItem]);
 
+  // Sync cart on mount
+  useEffect(() => {
+    const { loadCart } = useCartStore.getState();
+    if (isAuthenticated) {
+      loadCart();
+    }
+  }, [isAuthenticated]);
+
   const handleQuantityChange = (newQuantity) => {
-    if (newQuantity < 1 || newQuantity > 10) return;
+    if (newQuantity < 1) return;
+    
+    // Check stock limit
+    const maxQuantity = Math.min(10, product?.stock || 10);
+    if (newQuantity > maxQuantity) {
+      toast.error(`Only ${maxQuantity} items available in stock`);
+      return;
+    }
+    
     setQuantity(newQuantity);
   };
 
   const handleAddToCart = async () => {
     if (!isAuthenticated) {
       toast.error('Please login to add items to cart');
+      // Navigate to login page with return URL
+      navigate('/login', { state: { from: `/products/${product.id}` } });
       return;
     }
 
-    if (!product.inStock) {
+    if (product.stock === 0) {
       toast.error('This product is out of stock');
       return;
     }
 
-    setIsAddingToCart(true);
     try {
       const result = await addToCart(product.id, quantity);
       if (result.success) {
@@ -54,8 +88,6 @@ export default function ProductDetail() {
       }
     } catch (error) {
       console.error('Failed to add to cart:', error);
-    } finally {
-      setIsAddingToCart(false);
     }
   };
 
@@ -65,7 +97,6 @@ export default function ProductDetail() {
     try {
       await updateQuantity(cartItem.id, newQuantity);
       setQuantity(newQuantity);
-      toast.success('Cart updated');
     } catch (error) {
       console.error('Failed to update quantity:', error);
     }
@@ -75,14 +106,26 @@ export default function ProductDetail() {
     if (!cartItem) return;
     
     try {
-      await updateQuantity(cartItem.id, 0);
+      await removeFromCart(cartItem.id);
       setQuantity(1);
-      toast.success('Item removed from cart');
     } catch (error) {
       console.error('Failed to remove from cart:', error);
     }
   };
 
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-neutral-50 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="animate-spin mx-auto mb-4" size={48} />
+          <h2 className="text-xl font-semibold text-neutral-900">Loading product...</h2>
+        </div>
+      </div>
+    );
+  }
+
+  // Product not found
   if (!product) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -105,7 +148,7 @@ export default function ProductDetail() {
         {/* Product Image */}
         <div className="flex flex-col items-center justify-center md:items-start md:justify-start">
           <img
-            src={product.detailImage || product.image}
+            src={product.images?.[0] || product.image}
             alt={product.name}
             className="w-full max-w-md rounded-xl object-cover mb-8 md:mb-0 md:sticky md:top-24 shadow-none"
             style={{ aspectRatio: '3/4', background: '#f4f4f4' }}
@@ -124,14 +167,14 @@ export default function ProductDetail() {
             
             {/* Product Badges */}
             <div className="flex items-center gap-2 mb-4">
-              {product.isNew && (
-                <span className="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded-full flex items-center gap-1">
-                  <Tag size={12} /> New
+              {product.stock === 0 && (
+                <span className="bg-red-100 text-red-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
+                  Out of Stock
                 </span>
               )}
-              {product.discount && (
-                <span className="bg-red-100 text-red-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
-                  {product.discount}% OFF
+              {product.stock > 0 && product.stock < 10 && (
+                <span className="bg-yellow-100 text-yellow-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
+                  Low Stock
                 </span>
               )}
             </div>
@@ -142,11 +185,8 @@ export default function ProductDetail() {
             <div className="flex items-center gap-3 mb-6">
               <div className="flex items-center gap-2">
                 <span className="text-2xl font-bold text-neutral-900">${product.price}</span>
-                {product.originalPrice && (
-                  <span className="text-lg text-neutral-400 line-through">${product.originalPrice}</span>
-                )}
               </div>
-              <span className="text-xs text-neutral-500 bg-neutral-100 px-2 py-1 rounded-full">{product.category}</span>
+              <span className="text-xs text-neutral-500 bg-neutral-100 px-2 py-1 rounded-full">{product.category?.name || 'General'}</span>
             </div>
 
             {/* Rating */}
@@ -157,14 +197,14 @@ export default function ProductDetail() {
                     key={i}
                     size={16}
                     className={cn(
-                      i < Math.floor(product.rating) 
+                      i < Math.floor(product.averageRating || 0) 
                         ? "text-yellow-400 fill-current" 
                         : "text-neutral-300"
                     )}
                   />
                 ))}
               </div>
-              <span className="text-sm text-neutral-600">({product.reviews} reviews)</span>
+              <span className="text-sm text-neutral-600">({product.reviewCount || 0} reviews)</span>
             </div>
 
             <div className="border-b border-neutral-200 mb-8"></div>
@@ -172,7 +212,7 @@ export default function ProductDetail() {
             {/* Description */}
             <p className="text-base text-neutral-700 mb-8 leading-relaxed">{product.description}</p>
             
-            {/* Features */}
+            {/* Features - Show if available */}
             {product.features && product.features.length > 0 && (
               <div className="mb-8">
                 <h3 className="font-semibold text-neutral-900 mb-4">Key Features</h3>
@@ -192,8 +232,10 @@ export default function ProductDetail() {
           <div className="mt-8 md:mt-0 md:sticky md:bottom-12 bg-white/80 md:bg-white/90 md:backdrop-blur-md rounded-xl md:shadow-soft p-6 flex flex-col gap-4 border border-neutral-100">
             {/* Stock Status */}
             <div className="flex items-center gap-4">
-              {product.inStock ? (
-                <span className="text-xs text-success-700 bg-success-100 px-2 py-1 rounded-full font-medium">In Stock</span>
+              {product.stock > 0 ? (
+                <span className="text-xs text-success-700 bg-success-100 px-2 py-1 rounded-full font-medium">
+                  In Stock ({product.stock} available)
+                </span>
               ) : (
                 <span className="text-xs text-error-700 bg-error-100 px-2 py-1 rounded-full font-medium">Out of Stock</span>
               )}
@@ -201,7 +243,7 @@ export default function ProductDetail() {
               {isProductInCart && (
                 <span className="text-xs text-primary-700 bg-primary-100 px-2 py-1 rounded-full font-medium flex items-center gap-1">
                   <CheckCircle size={12} />
-                  In Cart
+                  In Cart ({cartItem?.quantity || 0})
                 </span>
               )}
             </div>
@@ -226,17 +268,17 @@ export default function ProductDetail() {
                   id="quantity"
                   type="number"
                   min={1}
-                  max={10}
+                  max={Math.min(10, product?.stock || 10)}
                   value={quantity}
                   onChange={e => handleQuantityChange(Number(e.target.value))}
                   className="w-16 px-3 py-2 text-center border-0 focus:ring-0 focus:outline-none bg-transparent"
                 />
                 <button
                   onClick={() => handleQuantityChange(quantity + 1)}
-                  disabled={quantity >= 10}
+                  disabled={quantity >= Math.min(10, product?.stock || 10)}
                   className={cn(
                     "p-2 transition-colors",
-                    quantity >= 10
+                    quantity >= Math.min(10, product?.stock || 10)
                       ? "text-neutral-300 cursor-not-allowed"
                       : "text-neutral-600 hover:bg-neutral-100"
                   )}
@@ -252,15 +294,15 @@ export default function ProductDetail() {
                 <>
                   <button
                     onClick={() => handleUpdateQuantity(quantity)}
-                    disabled={isAddingToCart}
-                    className="flex-1 py-3 px-4 rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2 bg-primary-600 text-white hover:bg-primary-700"
+                    disabled={isLoading}
+                    className="flex-1 py-3 px-4 rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2 bg-primary-600 text-white hover:bg-primary-700 disabled:opacity-50"
                   >
-                    {isAddingToCart ? "Updating..." : "Update Cart"}
+                    {isLoading ? "Updating..." : "Update Cart"}
                   </button>
                   <button
                     onClick={handleRemoveFromCart}
-                    disabled={isAddingToCart}
-                    className="py-3 px-4 rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2 border border-neutral-300 text-neutral-700 hover:bg-neutral-50"
+                    disabled={isLoading}
+                    className="py-3 px-4 rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2 border border-neutral-300 text-neutral-700 hover:bg-neutral-50 disabled:opacity-50"
                   >
                     Remove
                   </button>
@@ -268,35 +310,39 @@ export default function ProductDetail() {
               ) : (
                 <button
                   onClick={handleAddToCart}
-                  disabled={!product.inStock || isAddingToCart}
+                  disabled={!product.inStock || isLoading}
                   className={cn(
                     "w-full py-3 px-4 rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2 text-lg",
-                    product.inStock && !isAddingToCart
+                    product.inStock && !isLoading
                       ? "bg-neutral-900 text-white hover:bg-neutral-800 shadow-none hover:shadow-md"
                       : "bg-neutral-200 text-neutral-500 cursor-not-allowed"
                   )}
                 >
                   <ShoppingCart size={22} />
-                  {isAddingToCart ? "Adding..." : "Add to Cart"}
+                  {isLoading ? "Adding..." : "Add to Cart"}
                 </button>
               )}
             </div>
 
             {/* Quick Actions */}
-            <div className="flex gap-2 text-sm">
-              <button
-                onClick={() => navigate('/cart')}
-                className="text-primary-600 hover:text-primary-700 transition-colors"
-              >
-                View Cart
-              </button>
-              <span className="text-neutral-300">•</span>
-              <button
-                onClick={() => navigate('/checkout')}
-                className="text-primary-600 hover:text-primary-700 transition-colors"
-              >
-                Checkout
-              </button>
+            <div className="flex flex-col gap-2 pt-4 border-t border-neutral-100">
+              <div className="flex items-center justify-between text-sm text-neutral-600">
+                <span>Quick Actions:</span>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => navigate('/cart')}
+                    className="text-primary-600 hover:text-primary-700 font-medium transition-colors"
+                  >
+                    View Cart
+                  </button>
+                  <button
+                    onClick={() => navigate('/checkout')}
+                    className="text-primary-600 hover:text-primary-700 font-medium transition-colors"
+                  >
+                    Checkout
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -309,6 +355,63 @@ export default function ProductDetail() {
           (Recommended products carousel coming soon)
         </div>
       </div>
+
+      {/* Floating Cart Preview */}
+      {getItemCount() > 0 && showCartPreview && (
+        <div className="fixed bottom-6 right-6 z-50">
+          <div className="bg-white rounded-xl shadow-large border border-neutral-200 p-4 max-w-sm">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="font-semibold text-neutral-900">Cart Preview</h3>
+              <button
+                onClick={() => setShowCartPreview(false)}
+                className="text-neutral-400 hover:text-neutral-600 transition-colors"
+              >
+                <X size={16} />
+              </button>
+            </div>
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center">
+                <ShoppingCart size={20} className="text-primary-600" />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-medium text-neutral-900">{getItemCount()} items in cart</p>
+                <p className="text-xs text-neutral-600">Ready to checkout</p>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => navigate('/cart')}
+                className="flex-1 py-2 px-3 text-sm font-medium text-primary-600 border border-primary-600 rounded-lg hover:bg-primary-50 transition-colors"
+              >
+                View Cart
+              </button>
+              <button
+                onClick={() => navigate('/checkout')}
+                className="flex-1 py-2 px-3 text-sm font-medium bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+              >
+                Checkout
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Small Cart Indicator (when preview is dismissed) */}
+      {getItemCount() > 0 && !showCartPreview && (
+        <div className="fixed top-6 right-6 z-50">
+          <button
+            onClick={() => setShowCartPreview(true)}
+            className="bg-primary-600 text-white rounded-full p-3 shadow-large hover:bg-primary-700 transition-colors"
+          >
+            <div className="relative">
+              <ShoppingCart size={20} />
+              <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                {getItemCount()}
+              </span>
+            </div>
+          </button>
+        </div>
+      )}
     </div>
   );
 } 

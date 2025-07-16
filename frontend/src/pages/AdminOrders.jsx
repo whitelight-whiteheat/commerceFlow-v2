@@ -58,48 +58,13 @@ export default function AdminOrders() {
 
   const loadOrders = async () => {
     try {
-      const response = await api.get('/orders/all'); // We'll need to create this endpoint
+      setIsLoading(true);
+      const response = await api.get('/orders');
       setOrders(response.data.orders || []);
       setFilteredOrders(response.data.orders || []);
     } catch (error) {
       console.error('Failed to load orders:', error);
-      // For now, use mock data
-      const mockOrders = [
-        {
-          id: '1',
-          customer: { firstName: 'John', lastName: 'Doe', email: 'john@example.com' },
-          total: 299.99,
-          status: 'PENDING',
-          createdAt: '2024-01-15T10:30:00Z',
-          orderItems: [{ product: { name: 'Wireless Headphones' }, quantity: 1 }]
-        },
-        {
-          id: '2',
-          customer: { firstName: 'Jane', lastName: 'Smith', email: 'jane@example.com' },
-          total: 149.50,
-          status: 'PROCESSING',
-          createdAt: '2024-01-14T15:45:00Z',
-          orderItems: [{ product: { name: 'Smart Watch' }, quantity: 1 }]
-        },
-        {
-          id: '3',
-          customer: { firstName: 'Mike', lastName: 'Johnson', email: 'mike@example.com' },
-          total: 89.99,
-          status: 'SHIPPED',
-          createdAt: '2024-01-14T09:20:00Z',
-          orderItems: [{ product: { name: 'Coffee Maker' }, quantity: 1 }]
-        },
-        {
-          id: '4',
-          customer: { firstName: 'Sarah', lastName: 'Wilson', email: 'sarah@example.com' },
-          total: 199.99,
-          status: 'DELIVERED',
-          createdAt: '2024-01-13T14:15:00Z',
-          orderItems: [{ product: { name: 'Water Bottle' }, quantity: 2 }]
-        }
-      ];
-      setOrders(mockOrders);
-      setFilteredOrders(mockOrders);
+      toast.error('Failed to load orders');
     } finally {
       setIsLoading(false);
     }

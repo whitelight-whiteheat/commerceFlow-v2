@@ -9,7 +9,7 @@ const prisma = new PrismaClient();
 // Get all products with filtering and pagination
 router.get('/', [
   query('page').optional().isInt({ min: 1 }).toInt(),
-  query('limit').optional().isInt({ min: 1, max: 100 }).toInt(),
+  query('limit').optional().isInt({ min: 1, max: 1000 }).toInt(),
   query('category').optional().isString(),
   query('search').optional().isString(),
   query('minPrice').optional().isFloat({ min: 0 }).toFloat(),
@@ -300,6 +300,43 @@ router.delete('/:id', authenticateToken, requireAdmin, async (req, res) => {
   } catch (error) {
     console.error('Delete product error:', error);
     res.status(500).json({ message: 'Failed to delete product' });
+  }
+});
+
+// Bulk delete products (admin only)
+router.delete('/bulk', authenticateToken, requireAdmin, [
+  body('productIds').isArray({ min: 1 }).withMessage('At least one product ID is required')
+], async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    const { productIds } = req.body;
+
+    // Check if all products exist
+    const existingProducts = await prisma.product.findMany({
+      where: { id: { in: productIds } }
+    });
+
+    if (existingProducts.length !== productIds.length) {
+      return res.status(400).json({ message: 'Some products not found' });
+    }
+
+    // Soft delete all products by setting isActive to false
+    await prisma.product.updateMany({
+      where: { id: { in: productIds } },
+      data: { isActive: false }
+    });
+
+    res.json({ 
+      message: `${productIds.length} products deleted successfully`,
+      deletedCount: productIds.length
+    });
+  } catch (error) {
+    console.error('Bulk delete products error:', error);
+    res.status(500).json({ message: 'Failed to delete products' });
   }
 });
 

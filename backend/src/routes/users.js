@@ -16,6 +16,14 @@ router.get('/', requireAdmin, async (req, res) => {
         lastName: true,
         role: true,
         createdAt: true,
+        orders: {
+          select: {
+            id: true,
+            total: true,
+            status: true,
+            createdAt: true
+          }
+        },
         _count: {
           select: {
             orders: true,
@@ -26,12 +34,31 @@ router.get('/', requireAdmin, async (req, res) => {
       orderBy: { createdAt: 'desc' }
     });
 
-    const usersWithStats = users.map(user => ({
-      ...user,
-      orderCount: user._count.orders,
-      reviewCount: user._count.reviews,
-      _count: undefined
-    }));
+    const usersWithStats = users.map(user => {
+      // Calculate total spent from completed orders
+      const totalSpent = user.orders
+        .filter(order => order.status === 'DELIVERED')
+        .reduce((sum, order) => sum + order.total, 0);
+
+      // Calculate average order value
+      const completedOrders = user.orders.filter(order => order.status === 'DELIVERED');
+      const averageOrderValue = completedOrders.length > 0 
+        ? totalSpent / completedOrders.length 
+        : 0;
+
+      return {
+        ...user,
+        orderCount: user._count.orders,
+        reviewCount: user._count.reviews,
+        totalSpent: Math.round(totalSpent * 100) / 100,
+        totalOrders: user._count.orders,
+        averageOrderValue: Math.round(averageOrderValue * 100) / 100,
+        status: user.role === 'ADMIN' ? 'admin' : 'active', // Simple status logic
+        phone: 'N/A', // Placeholder since we don't have phone in schema
+        orders: undefined, // Remove orders array to keep response clean
+        _count: undefined
+      };
+    });
 
     res.json({ users: usersWithStats });
   } catch (error) {

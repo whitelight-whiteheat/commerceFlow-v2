@@ -30,33 +30,28 @@ export const useCartStore = create(
 
       // Add item to cart
       addToCart: async (productId, quantity = 1) => {
-        const { isAuthenticated } = useAuthStore.getState();
+        const { isAuthenticated, token } = useAuthStore.getState();
+        console.log('🛒 Add to cart - Auth check:', { isAuthenticated, hasToken: !!token });
+        
         if (!isAuthenticated) {
           toast.error('Please login to add items to cart');
-          return { success: false };
+          return { success: false, error: 'Please login to add items to cart' };
         }
 
         set({ isLoading: true });
         try {
-          const response = await api.post('/cart/add', { productId, quantity });
+          console.log('📤 Sending cart request:', { productId, quantity });
+          const response = await api.post('/cart/add', { productId: String(productId), quantity });
           const { item } = response.data;
           
-          set(state => ({
-            items: state.items.map(existingItem => 
-              existingItem.product.id === productId 
-                ? { ...existingItem, quantity: existingItem.quantity + quantity }
-                : existingItem
-            ).concat(
-              state.items.some(existingItem => existingItem.product.id === productId) 
-                ? [] 
-                : [item]
-            ),
-            isLoading: false
-          }));
-
-          toast.success('Added to cart!');
+          console.log('✅ Cart request successful:', response.data);
+          
+          // Refresh cart from server to ensure consistency
+          await get().loadCart();
+          
           return { success: true };
         } catch (error) {
+          console.error('❌ Cart request failed:', error.response?.data || error.message);
           set({ isLoading: false });
           const message = error.response?.data?.message || 'Failed to add to cart';
           toast.error(message);
@@ -69,15 +64,10 @@ export const useCartStore = create(
         set({ isLoading: true });
         try {
           const response = await api.put(`/cart/update/${itemId}`, { quantity });
-          const { item } = response.data;
           
-          set(state => ({
-            items: state.items.map(cartItem => 
-              cartItem.id === itemId ? item : cartItem
-            ),
-            isLoading: false
-          }));
-
+          // Refresh cart from server to ensure consistency
+          await get().loadCart();
+          
           toast.success('Cart updated!');
           return { success: true };
         } catch (error) {
@@ -94,11 +84,9 @@ export const useCartStore = create(
         try {
           await api.delete(`/cart/remove/${itemId}`);
           
-          set(state => ({
-            items: state.items.filter(item => item.id !== itemId),
-            isLoading: false
-          }));
-
+          // Refresh cart from server to ensure consistency
+          await get().loadCart();
+          
           toast.success('Item removed from cart');
           return { success: true };
         } catch (error) {

@@ -1,9 +1,12 @@
 import { useCartStore } from '../stores/cartStore';
+import { useAuthStore } from '../stores/authStore';
 import { Link } from 'react-router-dom';
 import { Minus, Plus, Trash2, ArrowLeft, ShoppingBag } from 'lucide-react';
 import { cn } from '../lib/utils';
+import LoginPrompt from '../components/LoginPrompt';
 
 export default function Cart() {
+  const { isAuthenticated } = useAuthStore();
   const { 
     items, 
     removeFromCart, 
@@ -21,6 +24,17 @@ export default function Cart() {
   const handleRemoveItem = async (itemId) => {
     await removeFromCart(itemId);
   };
+
+  // Show login prompt if not authenticated
+  if (!isAuthenticated) {
+    return (
+      <LoginPrompt 
+        title="Login to View Your Cart"
+        message="Please login to view and manage your shopping cart. Your cart items will be saved once you're logged in."
+        showCartIcon={true}
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen bg-neutral-50 py-12 px-4">

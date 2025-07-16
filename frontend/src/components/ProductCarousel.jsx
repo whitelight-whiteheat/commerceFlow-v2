@@ -2,16 +2,29 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import '../index.css';
 import { Link } from 'react-router-dom';
 import { cn } from '../lib/utils';
+import { useState, useRef, useEffect } from 'react';
+import { useCartStore } from '../stores/cartStore';
+import toast from 'react-hot-toast';
 
 // Inline ProductCard (copied from Products.jsx for reuse)
-function ProductCard({ product }) {
+function ProductCard({ product, onAddToCart }) {
+  // Ensure HTTPS URLs and provide fallback
+  const getImageUrl = (url, images) => {
+    if (images && images.length > 0) return images[0].replace('http://', 'https://');
+    if (!url) return 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=400&h=400&fit=crop';
+    return url.replace('http://', 'https://');
+  };
+
   return (
-    <div className="bg-white rounded-xl shadow-soft hover:shadow-medium transition-all duration-200 overflow-hidden group min-w-[220px] max-w-[240px] w-full">
+    <div className="bg-white rounded-xl shadow-soft hover:shadow-medium transition-all duration-200 overflow-hidden group w-full max-w-[280px] min-w-[240px]">
       <div className="relative aspect-square overflow-hidden">
         <img
-          src={product.image}
+          src={getImageUrl(product.image, product.images)}
           alt={product.name}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+          onError={(e) => {
+            e.target.src = 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=400&h=400&fit=crop';
+          }}
         />
         {!product.inStock && (
           <div className="absolute top-2 right-2 bg-error-500 text-white px-2 py-1 rounded-full text-xs font-medium">
@@ -57,6 +70,7 @@ function ProductCard({ product }) {
                 ? "bg-primary-600 text-white hover:bg-primary-700"
                 : "bg-neutral-200 text-neutral-500 cursor-not-allowed"
             )}
+            onClick={onAddToCart ? (e) => { e.preventDefault(); e.stopPropagation(); onAddToCart(product); } : undefined}
           >
             {product.inStock ? 'Add to Cart' : 'Out of Stock'}
           </button>
@@ -66,62 +80,86 @@ function ProductCard({ product }) {
   );
 }
 
-export default function ProductCarousel({ products }) {
-  // Remove refs, state, and scroll logic
+export default function ProductCarousel({ products, onAddToCart }) {
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+  const scrollContainerRef = useRef(null);
+
+  const checkScrollButtons = () => {
+    if (scrollContainerRef.current) {
+      const { scrollLeft, scrollWidth, clientWidth } = scrollContainerRef.current;
+      setCanScrollLeft(scrollLeft > 0);
+      setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 1);
+    }
+  };
+
+  useEffect(() => {
+    checkScrollButtons();
+    window.addEventListener('resize', checkScrollButtons);
+    return () => window.removeEventListener('resize', checkScrollButtons);
+  }, [products]);
+
+  const scroll = (direction) => {
+    if (scrollContainerRef.current) {
+      const scrollAmount = 300;
+      const newScrollLeft = scrollContainerRef.current.scrollLeft + (direction === 'left' ? -scrollAmount : scrollAmount);
+      scrollContainerRef.current.scrollTo({
+        left: newScrollLeft,
+        behavior: 'smooth'
+      });
+    }
+  };
+
+  const handleScroll = () => {
+    checkScrollButtons();
+  };
+
+  if (products.length === 0) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <p className="text-neutral-500">No products available</p>
+      </div>
+    );
+  }
+
   return (
-    <div 
-      className="relative w-full group"
-    >
-      {/* Left Arrow - visually present but disabled */}
-      <button
-        aria-label="Scroll left"
-        className="absolute left-2 top-1/2 -translate-y-1/2 z-20 bg-neutral-100 text-primary-600 shadow p-1.5 rounded-full border border-neutral-300 transition-all duration-200 hover:bg-neutral-200 focus:bg-neutral-200 focus:outline-none items-center justify-center"
-        style={{ left: 0, pointerEvents: 'none', opacity: 0.5 }}
-        tabIndex={-1}
-        disabled
-      >
-        <ChevronLeft size={20} className="text-primary-600" />
-      </button>
-      {/* Always show on mobile - visually present but disabled */}
-      <button
-        aria-label="Scroll left"
-        className="flex md:hidden absolute left-2 top-1/2 -translate-y-1/2 z-20 bg-neutral-100 text-primary-600 shadow p-1.5 rounded-full border border-neutral-300 transition-all duration-200 hover:bg-neutral-200 focus:bg-neutral-200 focus:outline-none items-center justify-center"
-        style={{ left: 0, pointerEvents: 'none', opacity: 0.5 }}
-        tabIndex={-1}
-        disabled
-      >
-        <ChevronLeft size={20} className="text-primary-600" />
-      </button>
+    <div className="relative w-full group">
+      {/* Left Arrow */}
+      {canScrollLeft && (
+        <button
+          onClick={() => scroll('left')}
+          aria-label="Scroll left"
+          className="absolute left-2 top-1/2 -translate-y-1/2 z-20 bg-white text-primary-600 shadow-lg p-2 rounded-full border border-neutral-200 transition-all duration-200 hover:bg-neutral-50 focus:outline-none focus:ring-2 focus:ring-primary-500"
+        >
+          <ChevronLeft size={20} />
+        </button>
+      )}
+      
+      {/* Right Arrow */}
+      {canScrollRight && (
+        <button
+          onClick={() => scroll('right')}
+          aria-label="Scroll right"
+          className="absolute right-2 top-1/2 -translate-y-1/2 z-20 bg-white text-primary-600 shadow-lg p-2 rounded-full border border-neutral-200 transition-all duration-200 hover:bg-neutral-50 focus:outline-none focus:ring-2 focus:ring-primary-500"
+        >
+          <ChevronRight size={20} />
+        </button>
+      )}
+
+      {/* Scrollable Container */}
       <div
-        className="flex gap-4 w-full justify-center py-2 px-8"
-        style={{ overflowX: 'visible' }}
+        ref={scrollContainerRef}
+        onScroll={handleScroll}
+        className="flex gap-4 overflow-x-auto scrollbar-hide pb-4 px-2"
       >
         {products.map(product => (
           <Link key={product.id} to={`/products/${product.id}`} className="shrink-0">
-            <ProductCard product={product} />
+            <ProductCard product={product} onAddToCart={onAddToCart} />
           </Link>
         ))}
       </div>
-      {/* Right Arrow - visually present but disabled */}
-      <button
-        aria-label="Scroll right"
-        className="absolute right-2 top-1/2 -translate-y-1/2 z-20 bg-neutral-100 text-primary-600 shadow p-1.5 rounded-full border border-neutral-300 transition-all duration-200 hover:bg-neutral-200 focus:bg-neutral-200 focus:outline-none items-center justify-center"
-        style={{ right: 0, pointerEvents: 'none', opacity: 0.5 }}
-        tabIndex={-1}
-        disabled
-      >
-        <ChevronRight size={20} className="text-primary-600" />
-      </button>
-      {/* Always show on mobile - visually present but disabled */}
-      <button
-        aria-label="Scroll right"
-        className="flex md:hidden absolute right-2 top-1/2 -translate-y-1/2 z-20 bg-neutral-100 text-primary-600 shadow p-1.5 rounded-full border border-neutral-300 transition-all duration-200 hover:bg-neutral-200 focus:bg-neutral-200 focus:outline-none items-center justify-center"
-        style={{ right: 0, pointerEvents: 'none', opacity: 0.5 }}
-        tabIndex={-1}
-        disabled
-      >
-        <ChevronRight size={20} className="text-primary-600" />
-      </button>
+
+
     </div>
   );
 }

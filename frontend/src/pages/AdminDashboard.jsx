@@ -15,40 +15,38 @@ import {
 } from 'lucide-react';
 import { useAuthStore } from '../stores/authStore';
 import { cn } from '../lib/utils';
-
-// Mock analytics data (replace with API calls)
-const mockAnalytics = {
-  totalRevenue: 15420.50,
-  totalOrders: 342,
-  totalProducts: 156,
-  totalCustomers: 89,
-  revenueChange: 12.5,
-  ordersChange: -2.3,
-  productsChange: 8.7,
-  customersChange: 15.2
-};
-
-const recentOrders = [
-  { id: 1, customer: 'John Doe', amount: 299.99, status: 'completed', date: '2024-01-15' },
-  { id: 2, customer: 'Jane Smith', amount: 149.50, status: 'processing', date: '2024-01-14' },
-  { id: 3, customer: 'Mike Johnson', amount: 89.99, status: 'shipped', date: '2024-01-14' },
-  { id: 4, customer: 'Sarah Wilson', amount: 199.99, status: 'pending', date: '2024-01-13' },
-];
-
-const topProducts = [
-  { name: 'Wireless Headphones', sales: 45, revenue: 4045.55 },
-  { name: 'Smart Watch', sales: 32, revenue: 9596.68 },
-  { name: 'Coffee Maker', sales: 28, revenue: 5599.72 },
-  { name: 'Water Bottle', sales: 67, revenue: 1674.33 },
-];
+import { api } from '../lib/api';
+import toast from 'react-hot-toast';
 
 export default function AdminDashboard() {
   const { user } = useAuthStore();
   const [isLoading, setIsLoading] = useState(true);
+  const [analytics, setAnalytics] = useState(null);
+  const [recentOrders, setRecentOrders] = useState([]);
+  const [topProducts, setTopProducts] = useState([]);
 
   useEffect(() => {
-    // Simulate loading
-    setTimeout(() => setIsLoading(false), 1000);
+    const fetchDashboardData = async () => {
+      try {
+        setIsLoading(true);
+        const [analyticsRes, ordersRes, productsRes] = await Promise.all([
+          api.get('/analytics/overview'),
+          api.get('/orders?limit=5'),
+          api.get('/analytics/products')
+        ]);
+        
+        setAnalytics(analyticsRes.data.overview);
+        setRecentOrders(ordersRes.data.orders || []);
+        setTopProducts(productsRes.data.products?.productPerformance?.slice(0, 4) || []);
+      } catch (error) {
+        console.error('Failed to fetch dashboard data:', error);
+        toast.error('Failed to load dashboard data');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchDashboardData();
   }, []);
 
   const getStatusColor = (status) => {
@@ -83,16 +81,16 @@ export default function AdminDashboard() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-neutral-600">Total Revenue</p>
-              <p className="text-2xl font-bold text-neutral-900">${mockAnalytics.totalRevenue.toLocaleString()}</p>
+              <p className="text-2xl font-bold text-neutral-900">${analytics?.totalRevenue?.toLocaleString() || '0'}</p>
             </div>
             <div className="w-12 h-12 bg-primary-100 rounded-lg flex items-center justify-center">
               <DollarSign className="text-primary-600" size={24} />
             </div>
           </div>
           <div className="flex items-center mt-4">
-            <ArrowUpRight className={cn("w-4 h-4", mockAnalytics.revenueChange > 0 ? "text-success-500" : "text-error-500")} />
-            <span className={cn("text-sm font-medium ml-1", mockAnalytics.revenueChange > 0 ? "text-success-600" : "text-error-600")}>
-              {Math.abs(mockAnalytics.revenueChange)}%
+            <ArrowUpRight className={cn("w-4 h-4", analytics?.revenueGrowth > 0 ? "text-success-500" : "text-error-500")} />
+            <span className={cn("text-sm font-medium ml-1", analytics?.revenueGrowth > 0 ? "text-success-600" : "text-error-600")}>
+              {Math.abs(analytics?.revenueGrowth || 0)}%
             </span>
             <span className="text-sm text-neutral-500 ml-1">vs last month</span>
           </div>
@@ -102,16 +100,16 @@ export default function AdminDashboard() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-neutral-600">Total Orders</p>
-              <p className="text-2xl font-bold text-neutral-900">{mockAnalytics.totalOrders}</p>
+              <p className="text-2xl font-bold text-neutral-900">{analytics?.totalOrders || '0'}</p>
             </div>
             <div className="w-12 h-12 bg-secondary-100 rounded-lg flex items-center justify-center">
               <ShoppingCart className="text-secondary-600" size={24} />
             </div>
           </div>
           <div className="flex items-center mt-4">
-            <ArrowDownRight className={cn("w-4 h-4", mockAnalytics.ordersChange > 0 ? "text-success-500" : "text-error-500")} />
-            <span className={cn("text-sm font-medium ml-1", mockAnalytics.ordersChange > 0 ? "text-success-600" : "text-error-600")}>
-              {Math.abs(mockAnalytics.ordersChange)}%
+            <ArrowDownRight className={cn("w-4 h-4", analytics?.orderGrowth > 0 ? "text-success-500" : "text-error-500")} />
+            <span className={cn("text-sm font-medium ml-1", analytics?.orderGrowth > 0 ? "text-success-600" : "text-error-600")}>
+              {Math.abs(analytics?.orderGrowth || 0)}%
             </span>
             <span className="text-sm text-neutral-500 ml-1">vs last month</span>
           </div>
@@ -121,16 +119,16 @@ export default function AdminDashboard() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-neutral-600">Total Products</p>
-              <p className="text-2xl font-bold text-neutral-900">{mockAnalytics.totalProducts}</p>
+              <p className="text-2xl font-bold text-neutral-900">{analytics?.totalProducts || '0'}</p>
             </div>
             <div className="w-12 h-12 bg-accent-100 rounded-lg flex items-center justify-center">
               <Package className="text-accent-600" size={24} />
             </div>
           </div>
           <div className="flex items-center mt-4">
-            <ArrowUpRight className={cn("w-4 h-4", mockAnalytics.productsChange > 0 ? "text-success-500" : "text-error-500")} />
-            <span className={cn("text-sm font-medium ml-1", mockAnalytics.productsChange > 0 ? "text-success-600" : "text-error-600")}>
-              {Math.abs(mockAnalytics.productsChange)}%
+            <ArrowUpRight className={cn("w-4 h-4", analytics?.productsChange > 0 ? "text-success-500" : "text-error-500")} />
+            <span className={cn("text-sm font-medium ml-1", analytics?.productsChange > 0 ? "text-success-600" : "text-error-600")}>
+              {Math.abs(analytics?.productsChange || 0)}%
             </span>
             <span className="text-sm text-neutral-500 ml-1">vs last month</span>
           </div>
@@ -140,16 +138,16 @@ export default function AdminDashboard() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-neutral-600">Total Customers</p>
-              <p className="text-2xl font-bold text-neutral-900">{mockAnalytics.totalCustomers}</p>
+              <p className="text-2xl font-bold text-neutral-900">{analytics?.totalUsers || '0'}</p>
             </div>
             <div className="w-12 h-12 bg-success-100 rounded-lg flex items-center justify-center">
               <Users className="text-success-600" size={24} />
             </div>
           </div>
           <div className="flex items-center mt-4">
-            <ArrowUpRight className={cn("w-4 h-4", mockAnalytics.customersChange > 0 ? "text-success-500" : "text-error-500")} />
-            <span className={cn("text-sm font-medium ml-1", mockAnalytics.customersChange > 0 ? "text-success-600" : "text-error-600")}>
-              {Math.abs(mockAnalytics.customersChange)}%
+            <ArrowUpRight className={cn("w-4 h-4", analytics?.customersChange > 0 ? "text-success-500" : "text-error-500")} />
+            <span className={cn("text-sm font-medium ml-1", analytics?.customersChange > 0 ? "text-success-600" : "text-error-600")}>
+              {Math.abs(analytics?.customersChange || 0)}%
             </span>
             <span className="text-sm text-neutral-500 ml-1">vs last month</span>
           </div>
@@ -236,14 +234,18 @@ export default function AdminDashboard() {
             {recentOrders.map(order => (
               <div key={order.id} className="flex items-center justify-between p-4 bg-neutral-50 rounded-lg">
                 <div>
-                  <p className="font-medium text-neutral-900">{order.customer}</p>
-                  <p className="text-sm text-neutral-600">${order.amount}</p>
+                  <p className="font-medium text-neutral-900">
+                    {order.user?.firstName} {order.user?.lastName}
+                  </p>
+                  <p className="text-sm text-neutral-600">${order.total}</p>
                 </div>
                 <div className="flex items-center space-x-3">
                   <span className={cn("px-2 py-1 rounded-full text-xs font-medium", getStatusColor(order.status))}>
                     {order.status}
                   </span>
-                  <span className="text-sm text-neutral-500">{order.date}</span>
+                  <span className="text-sm text-neutral-500">
+                    {new Date(order.createdAt).toLocaleDateString()}
+                  </span>
                 </div>
               </div>
             ))}
@@ -263,13 +265,13 @@ export default function AdminDashboard() {
           </div>
           <div className="space-y-4">
             {topProducts.map((product, index) => (
-              <div key={index} className="flex items-center justify-between p-4 bg-neutral-50 rounded-lg">
+              <div key={product.id || index} className="flex items-center justify-between p-4 bg-neutral-50 rounded-lg">
                 <div>
                   <p className="font-medium text-neutral-900">{product.name}</p>
-                  <p className="text-sm text-neutral-600">{product.sales} sales</p>
+                  <p className="text-sm text-neutral-600">{product.totalSold || 0} sales</p>
                 </div>
                 <div className="text-right">
-                  <p className="font-medium text-neutral-900">${product.revenue.toLocaleString()}</p>
+                  <p className="font-medium text-neutral-900">${(product.totalRevenue || 0).toLocaleString()}</p>
                   <p className="text-sm text-neutral-600">Revenue</p>
                 </div>
               </div>
