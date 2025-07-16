@@ -6,3 +6,18 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Custom component classes */
+@layer components {
+  .btn-primary {
+    @apply bg-gradient-to-r from-primary-600 to-secondary-600 text-white px-4 py-2 rounded-lg font-medium transition-all duration-200 hover:from-primary-700 hover:to-secondary-700 shadow-medium hover:shadow-large transform hover:-translate-y-0.5;
+  }
+  
+  .btn-outline {
+    @apply border border-primary-600 text-primary-600 px-4 py-2 rounded-lg font-medium transition-all duration-200 hover:bg-primary-600 hover:text-white;
+  }
+  
+  .text-gradient-primary {
+    @apply bg-gradient-to-r from-primary-600 to-secondary-600 bg-clip-text text-transparent;
+  }
+}

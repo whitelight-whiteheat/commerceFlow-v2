@@ -15,18 +15,22 @@ export const useAuthStore = create(
       initializeAuth: () => {
         const { token } = get();
         if (token) {
+          set({ isLoading: true });
           // Verify token is still valid
           api.get('/auth/me')
             .then(response => {
               set({ 
                 user: response.data.user, 
-                isAuthenticated: true 
+                isAuthenticated: true,
+                isLoading: false
               });
             })
             .catch(() => {
               // Token is invalid, clear auth
               get().logout();
             });
+        } else {
+          set({ isLoading: false });
         }
       },
 

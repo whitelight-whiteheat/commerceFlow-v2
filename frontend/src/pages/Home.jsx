@@ -137,11 +137,6 @@ export default function Home() {
         <ParallaxValueProps />
       </section>
 
-      {/* Footer as a padded section */}
-      <section className="w-full flex flex-col items-stretch justify-end px-0 py-24 bg-gradient-to-b from-neutral-50 to-neutral-100">
-        <Footer />
-      </section>
-
       {/* Back to Top Button */}
       {showBackToTop && (
         <button

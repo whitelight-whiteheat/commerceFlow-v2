@@ -2,10 +2,7 @@ import axios from 'axios';
 import { useAuthStore } from '../stores/authStore';
 import toast from 'react-hot-toast';
 
-// Debug environment variable
-console.log('VITE_API_URL:', import.meta.env.VITE_API_URL);
-console.log('Environment check:', new Date().toISOString());
-console.log('Backend should be ready with JWT_SECRET');
+// Environment variable for API URL
 
 // Create axios instance
 export const api = axios.create({
@@ -39,7 +36,6 @@ api.interceptors.response.use(
   (error) => {
     const { response } = error;
 
-    // Handle authentication errors
     if (response?.status === 401) {
       const authStore = useAuthStore.getState();
       authStore.logout();

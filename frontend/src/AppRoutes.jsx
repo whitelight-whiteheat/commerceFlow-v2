@@ -2,9 +2,12 @@ import { Routes, Route, useLocation } from 'react-router-dom';
 import Header from './components/layout/Header';
 import Footer from './components/layout/Footer';
 import AdminLayout from './components/layout/AdminLayout';
+import AuthGuard from './components/AuthGuard';
 import Home from './pages/Home';
 import Products from './pages/Products';
 import Categories from './pages/Categories';
+import Login from './pages/Login';
+import Register from './pages/Register';
 import AdminLogin from './pages/AdminLogin';
 import AdminDashboard from './pages/AdminDashboard';
 import AdminProducts from './pages/AdminProducts';
@@ -19,6 +22,7 @@ import ProductDetail from './pages/ProductDetail';
 import Cart from './pages/Cart';
 import Checkout from './pages/Checkout';
 import Orders from './pages/Orders';
+import Profile from './pages/Profile';
 
 export default function AppRoutes() {
   const location = useLocation();
@@ -40,8 +44,25 @@ export default function AppRoutes() {
           <Route path="/categories" element={<Categories />} />
           <Route path="/products/:id" element={<ProductDetail />} />
           <Route path="/cart" element={<Cart />} />
-          <Route path="/checkout" element={<Checkout />} />
-          <Route path="/orders" element={<Orders />} />
+          <Route path="/checkout" element={
+            <AuthGuard>
+              <Checkout />
+            </AuthGuard>
+          } />
+          <Route path="/orders" element={
+            <AuthGuard>
+              <Orders />
+            </AuthGuard>
+          } />
+          <Route path="/profile" element={
+            <AuthGuard>
+              <Profile />
+            </AuthGuard>
+          } />
+          
+          {/* Auth Routes */}
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
           
           {/* Admin Routes */}
           <Route path="/admin/login" element={<AdminLogin />} />
@@ -55,6 +76,7 @@ export default function AppRoutes() {
           </Route>
         </Routes>
       </main>
+      {!location.pathname.startsWith('/admin') && <Footer />}
       <Toaster
         position="top-right"
         toastOptions={{
