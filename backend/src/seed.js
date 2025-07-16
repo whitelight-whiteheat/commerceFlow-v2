@@ -4,9 +4,26 @@ import bcrypt from 'bcryptjs';
 const prisma = new PrismaClient();
 
 async function main() {
+  console.log('🌱 Starting database seeding...');
+  
+  try {
+    // Test database connection with timeout
+    const connectionPromise = prisma.$connect();
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('Database connection timeout')), 30000)
+    );
+    
+    await Promise.race([connectionPromise, timeoutPromise]);
+    console.log('✅ Database connection established');
+  } catch (error) {
+    console.error('❌ Database connection failed:', error.message);
+    throw error;
+  }
+
   // Seed database with initial data
 
   // Create admin user
+  console.log('👤 Creating admin user...');
   const hashedPassword = await bcrypt.hash('admin123', 12);
   
   const adminUser = await prisma.user.upsert({
@@ -46,6 +63,7 @@ async function main() {
     }
   ];
 
+  console.log('👥 Creating test customers...');
   for (const customer of testCustomers) {
     await prisma.user.upsert({
       where: { email: customer.email },
@@ -83,6 +101,7 @@ async function main() {
     }
   ];
 
+  console.log('📂 Creating categories...');
   const createdCategories = [];
   for (const category of categories) {
     const created = await prisma.category.upsert({
@@ -403,6 +422,7 @@ async function main() {
     }
   ];
 
+  console.log('📦 Creating products...');
   for (const product of products) {
     const created = await prisma.product.create({
       data: product
@@ -410,6 +430,7 @@ async function main() {
   }
 
   // Get all created products and users for reviews
+  console.log('⭐ Creating reviews...');
   const allProducts = await prisma.product.findMany();
   const allUsers = await prisma.user.findMany({ where: { role: 'USER' } });
 
@@ -439,8 +460,9 @@ async function main() {
 
   // Create reviews for each product
   for (const product of allProducts) {
-    // Generate 3-8 reviews per product
-    const numReviews = Math.floor(Math.random() * 6) + 3;
+    // Generate 3-8 reviews per product, but don't exceed available users
+    const maxReviews = Math.min(allUsers.length, Math.floor(Math.random() * 6) + 3);
+    const numReviews = maxReviews;
     const usedUserIds = new Set();
     
     for (let i = 0; i < numReviews; i++) {
@@ -456,8 +478,18 @@ async function main() {
       const rating = Math.floor(Math.random() * 3) + 3; // 3-5 stars
       const comment = reviewComments[Math.floor(Math.random() * reviewComments.length)];
       
-      await prisma.review.create({
-        data: {
+      await prisma.review.upsert({
+        where: {
+          userId_productId: {
+            userId: user.id,
+            productId: product.id
+          }
+        },
+        update: {
+          rating,
+          comment
+        },
+        create: {
           rating,
           comment,
           productId: product.id,
@@ -468,6 +500,7 @@ async function main() {
   }
 
   // Create a regular user for testing
+  console.log('👤 Creating regular user...');
   const regularUser = await prisma.user.upsert({
     where: { email: 'user@commerceflow.com' },
     update: {},
@@ -494,6 +527,10 @@ async function main() {
 main()
   .catch((e) => {
     console.error('❌ Seeding failed:', e);
+    console.error('Error details:', e.message);
+    if (e.code) {
+      console.error('Error code:', e.code);
+    }
     process.exit(1);
   })
   .finally(async () => {

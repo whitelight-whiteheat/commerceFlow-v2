@@ -25,7 +25,8 @@ import { api } from '../lib/api';
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
 
-const StatCard = ({ title, value, icon: Icon, change, color = 'blue' }) => {
+const StatCard = ({ title, value, icon, change, color = 'blue' }) => {
+  const IconComponent = icon;
   return (
   <div className="bg-white rounded-lg shadow p-6">
     <div className="flex items-center justify-between">
@@ -39,7 +40,7 @@ const StatCard = ({ title, value, icon: Icon, change, color = 'blue' }) => {
         )}
       </div>
       <div className={`p-3 rounded-full bg-${color}-100`}>
-        <Icon className={`w-6 h-6 text-${color}-600`} />
+        {IconComponent && <IconComponent className={`w-6 h-6 text-${color}-600`} />}
       </div>
     </div>
   </div>
