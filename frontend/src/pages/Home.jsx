@@ -2,7 +2,7 @@ import ProductCarousel from '../components/ProductCarousel';
 import ParallaxValueProps from '../components/ParallaxValueProps';
 import Footer from '../components/layout/Footer';
 import { TrendingUp, Sparkles, Zap, ArrowRight, Star, Shield, Truck, Clock, Loader2 } from 'lucide-react';
-import { useRef, useState, useEffect } from 'react';
+import { useRef, useState, useEffect, useMemo } from 'react';
 import { productApi } from '../lib/productApi';
 import { Link } from 'react-router-dom';
 import { useCartStore } from '../stores/cartStore';
@@ -19,8 +19,17 @@ function ProductRow({ title, products, seeMoreLink, icon: Icon, isLoading, onAdd
               <h2 className="text-2xl sm:text-3xl font-bold text-neutral-900 tracking-tight">{title}</h2>
             </div>
           </div>
-          <div className="flex items-center justify-center py-8">
-            <Loader2 className="animate-spin" size={48} />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="bg-white rounded-xl shadow-soft animate-pulse">
+                <div className="aspect-square bg-neutral-200 rounded-t-xl"></div>
+                <div className="p-4 space-y-3">
+                  <div className="h-4 bg-neutral-200 rounded w-3/4"></div>
+                  <div className="h-6 bg-neutral-200 rounded w-1/2"></div>
+                  <div className="h-4 bg-neutral-200 rounded w-1/4"></div>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </section>
@@ -68,6 +77,8 @@ export default function Home() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+
+
   // Fetch products on mount
   useEffect(() => {
     const fetchProducts = async () => {
@@ -77,6 +88,7 @@ export default function Home() {
         setProducts(Array.isArray(productsData) ? productsData : productsData.products || []);
       } catch (error) {
         console.error('Failed to fetch products:', error);
+        toast.error('Failed to load products. Please try again.');
       } finally {
         setIsLoading(false);
       }
@@ -97,37 +109,47 @@ export default function Home() {
     }
   };
 
-  // Dynamic product categorization
-  const getBestSellers = () => {
-    // First try to get products with high ratings and reviews
+  // Calculate categorized products with uniqueness using useMemo
+  const categorizedProducts = useMemo(() => {
+    if (products.length === 0) {
+      return { bestSellers: [], newReleases: [], bestSales: [] };
+    }
+
+    const usedIds = new Set();
+    const result = { bestSellers: [], newReleases: [], bestSales: [] };
+
+    // Helper function to get unique products
+    const getUniqueProducts = (productList, maxCount = 6) => {
+      const uniqueProducts = productList.filter(product => !usedIds.has(product.id));
+      const selected = uniqueProducts.slice(0, maxCount);
+      selected.forEach(product => usedIds.add(product.id));
+      return selected;
+    };
+
+    // Get Best Sellers
     let bestSellers = products
       .filter(product => product.averageRating >= 4.5 && product.reviewCount >= 50)
       .sort((a, b) => b.averageRating - a.averageRating);
 
-    // If no products meet the criteria, fall back to products with any rating
     if (bestSellers.length === 0) {
       bestSellers = products
         .filter(product => product.averageRating > 0)
         .sort((a, b) => b.averageRating - a.averageRating);
     }
 
-    // If still no products, use products with low stock (popular items)
     if (bestSellers.length === 0) {
       bestSellers = products
         .filter(product => product.stock > 0 && product.stock <= 30)
         .sort((a, b) => a.stock - b.stock);
     }
 
-    // Final fallback: just take the first 6 products
     if (bestSellers.length === 0) {
       bestSellers = products.slice(0, 6);
     }
 
-    return bestSellers.slice(0, 6);
-  };
+    result.bestSellers = getUniqueProducts(bestSellers, 6);
 
-  const getNewReleases = () => {
-    // Get products created in the last 30 days
+    // Get New Releases
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
     
@@ -135,61 +157,76 @@ export default function Home() {
       .filter(product => new Date(product.createdAt) >= thirtyDaysAgo)
       .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
-    // If no recent products, use products with high stock (new inventory)
     if (newReleases.length === 0) {
       newReleases = products
         .filter(product => product.stock > 50)
         .sort((a, b) => b.stock - a.stock);
     }
 
-    // Final fallback: take products from the middle of the list
     if (newReleases.length === 0) {
       const midPoint = Math.floor(products.length / 2);
       newReleases = products.slice(midPoint, midPoint + 6);
     }
 
-    return newReleases.slice(0, 6);
-  };
+    result.newReleases = getUniqueProducts(newReleases, 6);
 
-  const getBestSales = () => {
-    // Get products with low stock (indicating they're selling well)
+    // Get Best Sales
     let bestSales = products
       .filter(product => product.stock > 0 && product.stock <= 20)
       .sort((a, b) => a.stock - b.stock);
 
-    // If no low stock products, use products with medium stock
     if (bestSales.length === 0) {
       bestSales = products
         .filter(product => product.stock > 0 && product.stock <= 50)
         .sort((a, b) => a.stock - b.stock);
     }
 
-    // Final fallback: use products with higher prices (premium items)
     if (bestSales.length === 0) {
       bestSales = products
         .filter(product => parseFloat(product.price) > 50)
         .sort((a, b) => parseFloat(b.price) - parseFloat(a.price));
     }
 
-    return bestSales.slice(0, 6);
-  };
+    result.bestSales = getUniqueProducts(bestSales, 6);
+
+    return result;
+  }, [products]);
+
+
 
   // Transform API products to match carousel format
   const transformProductForCarousel = (product) => ({
+    ...product,
     id: product.id,
     name: product.name,
     price: parseFloat(product.price),
-    image: product.images[0] || '',
-    category: product.category?.name || 'Uncategorized',
+    image: product.images?.[0] || '',
+    category: product.category?.name || product.category || 'Uncategorized',
     rating: product.averageRating || 0,
     reviews: product.reviewCount || 0,
     inStock: product.stock > 0,
-    description: product.description
+    description: product.description,
+    // Ensure all required fields are present
+    averageRating: product.averageRating || 0,
+    reviewCount: product.reviewCount || 0,
+    stock: product.stock || 0,
+    createdAt: product.createdAt || new Date().toISOString()
   });
 
-  const bestSellers = getBestSellers().map(transformProductForCarousel);
-  const newReleases = getNewReleases().map(transformProductForCarousel);
-  const bestSales = getBestSales().map(transformProductForCarousel);
+  const bestSellers = categorizedProducts.bestSellers.map(transformProductForCarousel);
+  const newReleases = categorizedProducts.newReleases.map(transformProductForCarousel);
+  const bestSales = categorizedProducts.bestSales.map(transformProductForCarousel);
+
+  // Debug: Log product counts and check for duplicates
+  console.log('🏠 Home: Product categorization:', {
+    totalProducts: products.length,
+    bestSellers: bestSellers.length,
+    newReleases: newReleases.length,
+    bestSales: bestSales.length,
+    bestSellersIds: bestSellers.map(p => p.id),
+    newReleasesIds: newReleases.map(p => p.id),
+    bestSalesIds: bestSales.map(p => p.id)
+  });
 
   return (
     <>

@@ -40,21 +40,35 @@ export const useCartStore = create(
 
         set({ isLoading: true });
         try {
-          console.log('📤 Sending cart request:', { productId, quantity });
           const response = await api.post('/cart/add', { productId: String(productId), quantity });
-          const { item } = response.data;
-          
-          console.log('✅ Cart request successful:', response.data);
           
           // Refresh cart from server to ensure consistency
           await get().loadCart();
           
+          // Show success toast with smooth animation
+          toast.success('Added to cart!', {
+            duration: 2000,
+            style: {
+              background: '#10B981',
+              color: '#fff',
+            },
+            iconTheme: {
+              primary: '#fff',
+              secondary: '#10B981',
+            },
+          });
+          
           return { success: true };
         } catch (error) {
-          console.error('❌ Cart request failed:', error.response?.data || error.message);
           set({ isLoading: false });
           const message = error.response?.data?.message || 'Failed to add to cart';
-          toast.error(message);
+          toast.error(message, {
+            duration: 3000,
+            style: {
+              background: '#EF4444',
+              color: '#fff',
+            },
+          });
           return { success: false, error: message };
         }
       },

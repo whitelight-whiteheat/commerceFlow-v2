@@ -190,115 +190,115 @@ export default function AdminProducts() {
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
+        <div className="flex items-center justify-between">
+          <div>
           <h1 className="text-2xl font-bold text-neutral-900">Products</h1>
           <p className="text-neutral-600">Manage your product catalog</p>
-        </div>
-        <button
-          onClick={() => setIsAddModalOpen(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
-        >
-          <Plus size={16} />
-          Add Product
-        </button>
-      </div>
-
-      {/* Filters and Search */}
-      <div className="bg-white rounded-xl shadow-soft p-6">
-        <div className="flex flex-col lg:flex-row gap-4">
-          {/* Search */}
-          <div className="flex-1">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-neutral-400" size={20} />
-              <input
-                type="text"
-                placeholder="Search products..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-neutral-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-              />
             </div>
-          </div>
-
-          {/* Category Filter */}
-          <div className="lg:w-48">
-            <select
-              value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
-              className="w-full px-3 py-2 border border-neutral-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+            <button
+              onClick={() => setIsAddModalOpen(true)}
+          className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
             >
+              <Plus size={16} />
+          Add Product
+            </button>
+        </div>
+
+        {/* Filters and Search */}
+      <div className="bg-white rounded-xl shadow-soft p-6">
+          <div className="flex flex-col lg:flex-row gap-4">
+            {/* Search */}
+            <div className="flex-1">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-neutral-400" size={20} />
+                <input
+                  type="text"
+                  placeholder="Search products..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border border-neutral-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                />
+              </div>
+            </div>
+
+            {/* Category Filter */}
+          <div className="lg:w-48">
+              <select
+                value={selectedCategory}
+                onChange={(e) => setSelectedCategory(e.target.value)}
+              className="w-full px-3 py-2 border border-neutral-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              >
               <option value="All">All Categories</option>
-              {categories.map(category => (
+                {categories.map(category => (
                 <option key={category.id} value={category.name}>
                   {category.name}
                 </option>
-              ))}
-            </select>
-          </div>
+                ))}
+              </select>
+            </div>
 
-          {/* Status Filter */}
+            {/* Status Filter */}
           <div className="lg:w-48">
-            <select
-              value={selectedStatus}
-              onChange={(e) => setSelectedStatus(e.target.value)}
+              <select
+                value={selectedStatus}
+                onChange={(e) => setSelectedStatus(e.target.value)}
               className="w-full px-3 py-2 border border-neutral-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-            >
+              >
               <option value="All">All Status</option>
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
-            </select>
-          </div>
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+              </select>
+            </div>
 
-          {/* Sort */}
+            {/* Sort */}
           <div className="lg:w-48">
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
               className="w-full px-3 py-2 border border-neutral-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-            >
+              >
               <option value="name">Sort by Name</option>
               <option value="price">Sort by Price</option>
               <option value="stock">Sort by Stock</option>
               <option value="createdAt">Sort by Date</option>
               <option value="rating">Sort by Rating</option>
-            </select>
+              </select>
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Bulk Actions */}
-      {selectedProducts.length > 0 && (
+        {/* Bulk Actions */}
+        {selectedProducts.length > 0 && (
         <div className="bg-white rounded-xl shadow-soft p-4">
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-neutral-600">
-              {selectedProducts.length} product(s) selected
-            </span>
-            <button
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-neutral-600">
+                {selectedProducts.length} product(s) selected
+              </span>
+                <button
               onClick={handleBulkDelete}
               className="flex items-center gap-2 px-3 py-1 bg-error-500 text-white rounded-lg hover:bg-error-600 transition-colors text-sm"
-            >
-              <Trash2 size={16} />
-              Delete Selected
-            </button>
+                >
+                  <Trash2 size={16} />
+                Delete Selected
+                </button>
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Products Table */}
-      <div className="bg-white rounded-xl shadow-soft overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
+        {/* Products Table */}
+        <div className="bg-white rounded-xl shadow-soft overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full">
             <thead className="bg-neutral-50">
-              <tr>
+                <tr>
                 <th className="px-6 py-3 text-left">
-                  <input
-                    type="checkbox"
-                    checked={selectedProducts.length === filteredProducts.length && filteredProducts.length > 0}
-                    onChange={handleSelectAll}
+                    <input
+                      type="checkbox"
+                      checked={selectedProducts.length === filteredProducts.length && filteredProducts.length > 0}
+                      onChange={handleSelectAll}
                     className="rounded border-neutral-300"
-                  />
-                </th>
+                    />
+                  </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
                   Product
                 </th>
@@ -320,36 +320,36 @@ export default function AdminProducts() {
                 <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
                   Actions
                 </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-neutral-200">
-              {filteredProducts.map(product => (
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-neutral-200">
+                {filteredProducts.map(product => (
                 <tr key={product.id} className="hover:bg-neutral-50">
-                  <td className="px-6 py-4">
-                    <input
-                      type="checkbox"
-                      checked={selectedProducts.includes(product.id)}
-                      onChange={() => handleSelectProduct(product.id)}
+                    <td className="px-6 py-4">
+                      <input
+                        type="checkbox"
+                        checked={selectedProducts.includes(product.id)}
+                        onChange={() => handleSelectProduct(product.id)}
                       className="rounded border-neutral-300"
-                    />
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center">
-                      <img
-                        src={product.image}
-                        alt={product.name}
-                        className="w-10 h-10 rounded-lg object-cover mr-3"
                       />
-                      <div>
+                    </td>
+                    <td className="px-6 py-4">
+                    <div className="flex items-center">
+                        <img
+                          src={product.image}
+                          alt={product.name}
+                        className="w-10 h-10 rounded-lg object-cover mr-3"
+                        />
+                        <div>
                         <div className="text-sm font-medium text-neutral-900">{product.name}</div>
                         <div className="text-sm text-neutral-500">ID: {product.id.slice(0, 8)}...</div>
                       </div>
-                    </div>
-                  </td>
+                      </div>
+                    </td>
                   <td className="px-6 py-4 text-sm text-neutral-900">{product.category}</td>
                   <td className="px-6 py-4 text-sm text-neutral-900">${product.price}</td>
                   <td className="px-6 py-4 text-sm text-neutral-900">{product.stock}</td>
-                  <td className="px-6 py-4">
+                    <td className="px-6 py-4">
                     <span className={cn(
                       "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium",
                       product.status === "active"
@@ -367,8 +367,8 @@ export default function AdminProducts() {
                           Inactive
                         </>
                       )}
-                    </span>
-                  </td>
+                      </span>
+                    </td>
                   <td className="px-6 py-4 text-sm text-neutral-900">
                     {product.averageRating > 0 ? (
                       <div className="flex items-center">
@@ -379,38 +379,38 @@ export default function AdminProducts() {
                     ) : (
                       <span className="text-neutral-400">No reviews</span>
                     )}
-                  </td>
-                  <td className="px-6 py-4">
+                    </td>
+                    <td className="px-6 py-4">
                     <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => handleEditProduct(product)}
+                        <button
+                          onClick={() => handleEditProduct(product)}
                         className="p-1 text-neutral-400 hover:text-primary-600 transition-colors"
-                      >
-                        <Edit size={16} />
-                      </button>
-                      <button
-                        onClick={() => handleDeleteProduct(product.id)}
+                        >
+                          <Edit size={16} />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteProduct(product.id)}
                         className="p-1 text-neutral-400 hover:text-error-600 transition-colors"
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
 
         {/* Empty state */}
-        {filteredProducts.length === 0 && (
-          <div className="text-center py-12">
+          {filteredProducts.length === 0 && (
+            <div className="text-center py-12">
             <Package size={48} className="mx-auto text-neutral-400 mb-4" />
             <h3 className="text-lg font-medium text-neutral-900 mb-2">No products found</h3>
             <p className="text-neutral-600">Try adjusting your search or filter criteria</p>
-          </div>
-        )}
-      </div>
+            </div>
+          )}
+        </div>
 
       {/* Results count */}
       <div className="text-sm text-neutral-600">

@@ -55,9 +55,14 @@ export default function Products() {
     }
   }, [location.search, categories]);
 
-  // Filter and sort products
+  // Filter and sort products with deduplication
   const filteredProducts = products
-    .filter(product => {
+    .filter((product, index, self) => {
+      // Remove duplicates by ID
+      const isDuplicate = self.findIndex(p => p.id === product.id) !== index;
+      if (isDuplicate) return false;
+      
+      // Apply other filters
       const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesCategory = selectedCategory === 'All' || product.category?.name === selectedCategory;
       const matchesPrice = product.price >= priceRange[0] && product.price <= priceRange[1];
@@ -70,7 +75,7 @@ export default function Products() {
         case 'price-desc':
           return b.price - a.price;
         case 'rating':
-          return b.rating - a.rating;
+          return (b.averageRating || 0) - (a.averageRating || 0);
         case 'newest':
           return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
         default:
@@ -92,10 +97,34 @@ export default function Products() {
   // Loading state
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-neutral-50 flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="animate-spin mx-auto mb-4" size={48} />
-          <h2 className="text-xl font-semibold text-neutral-900">Loading products...</h2>
+      <div className="min-h-screen bg-neutral-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {/* Header skeleton */}
+          <div className="mb-8">
+            <div className="h-8 bg-neutral-200 rounded w-1/3 mb-4 animate-pulse"></div>
+            <div className="h-4 bg-neutral-200 rounded w-1/2 animate-pulse"></div>
+          </div>
+          
+          {/* Filters skeleton */}
+          <div className="flex flex-wrap gap-4 mb-8">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="h-10 bg-neutral-200 rounded w-32 animate-pulse"></div>
+            ))}
+          </div>
+          
+          {/* Products grid skeleton */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {[...Array(8)].map((_, i) => (
+              <div key={i} className="bg-white rounded-xl shadow-soft animate-pulse">
+                <div className="aspect-square bg-neutral-200 rounded-t-xl"></div>
+                <div className="p-4 space-y-3">
+                  <div className="h-4 bg-neutral-200 rounded w-3/4"></div>
+                  <div className="h-6 bg-neutral-200 rounded w-1/2"></div>
+                  <div className="h-4 bg-neutral-200 rounded w-1/4"></div>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     );

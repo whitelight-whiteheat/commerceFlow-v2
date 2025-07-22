@@ -116,10 +116,25 @@ export default function ProductDetail() {
   // Loading state
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-neutral-50 flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="animate-spin mx-auto mb-4" size={48} />
-          <h2 className="text-xl font-semibold text-neutral-900">Loading product...</h2>
+      <div className="min-h-screen bg-neutral-50">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Image skeleton */}
+            <div className="aspect-square bg-neutral-200 rounded-xl animate-pulse"></div>
+            
+            {/* Content skeleton */}
+            <div className="space-y-6">
+              <div className="h-8 bg-neutral-200 rounded w-3/4 animate-pulse"></div>
+              <div className="h-6 bg-neutral-200 rounded w-1/4 animate-pulse"></div>
+              <div className="h-4 bg-neutral-200 rounded w-1/2 animate-pulse"></div>
+              <div className="space-y-2">
+                {[...Array(3)].map((_, i) => (
+                  <div key={i} className="h-4 bg-neutral-200 rounded animate-pulse"></div>
+                ))}
+              </div>
+              <div className="h-12 bg-neutral-200 rounded w-full animate-pulse"></div>
+            </div>
+          </div>
         </div>
       </div>
     );

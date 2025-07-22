@@ -3,11 +3,11 @@ import '../index.css';
 import { Link } from 'react-router-dom';
 import { cn } from '../lib/utils';
 import { useState, useRef, useEffect } from 'react';
-import { useCartStore } from '../stores/cartStore';
-import toast from 'react-hot-toast';
 
 // Inline ProductCard (copied from Products.jsx for reuse)
 function ProductCard({ product, onAddToCart }) {
+  const [isAddingToCart, setIsAddingToCart] = useState(false);
+  
   // Ensure HTTPS URLs and provide fallback
   const getImageUrl = (url, images) => {
     if (images && images.length > 0) return images[0].replace('http://', 'https://');
@@ -15,8 +15,22 @@ function ProductCard({ product, onAddToCart }) {
     return url.replace('http://', 'https://');
   };
 
+  const handleAddToCart = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (!onAddToCart || isAddingToCart) return;
+    
+    setIsAddingToCart(true);
+    try {
+      await onAddToCart(product);
+    } finally {
+      setIsAddingToCart(false);
+    }
+  };
+
   return (
-    <div className="bg-white rounded-xl shadow-soft hover:shadow-medium transition-all duration-200 overflow-hidden group w-full max-w-[280px] min-w-[240px]">
+    <div className="bg-white rounded-xl shadow-soft hover:shadow-medium transition-all duration-300 overflow-hidden group w-full max-w-[280px] min-w-[240px] transform hover:scale-105">
       <div className="relative aspect-square overflow-hidden">
         <img
           src={getImageUrl(product.image, product.images)}
@@ -63,16 +77,16 @@ function ProductCard({ product, onAddToCart }) {
         <div className="flex items-center justify-between">
           <span className="text-xl font-bold text-neutral-900">${product.price}</span>
           <button
-            disabled={!product.inStock}
+            disabled={!product.inStock || isAddingToCart}
             className={cn(
-              "px-4 py-2 rounded-lg font-medium transition-colors",
-              product.inStock
-                ? "bg-primary-600 text-white hover:bg-primary-700"
+              "px-4 py-2 rounded-lg font-medium transition-all duration-200 transform hover:scale-105 active:scale-95",
+              product.inStock && !isAddingToCart
+                ? "bg-primary-600 text-white hover:bg-primary-700 shadow-md hover:shadow-lg"
                 : "bg-neutral-200 text-neutral-500 cursor-not-allowed"
             )}
-            onClick={onAddToCart ? (e) => { e.preventDefault(); e.stopPropagation(); onAddToCart(product); } : undefined}
+            onClick={handleAddToCart}
           >
-            {product.inStock ? 'Add to Cart' : 'Out of Stock'}
+            {isAddingToCart ? 'Adding...' : (product.inStock ? 'Add to Cart' : 'Out of Stock')}
           </button>
         </div>
       </div>
@@ -83,6 +97,7 @@ function ProductCard({ product, onAddToCart }) {
 export default function ProductCarousel({ products, onAddToCart }) {
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
+  const [isScrolling, setIsScrolling] = useState(false);
   const scrollContainerRef = useRef(null);
 
   const checkScrollButtons = () => {
@@ -101,12 +116,16 @@ export default function ProductCarousel({ products, onAddToCart }) {
 
   const scroll = (direction) => {
     if (scrollContainerRef.current) {
+      setIsScrolling(true);
       const scrollAmount = 300;
       const newScrollLeft = scrollContainerRef.current.scrollLeft + (direction === 'left' ? -scrollAmount : scrollAmount);
       scrollContainerRef.current.scrollTo({
         left: newScrollLeft,
         behavior: 'smooth'
       });
+      
+      // Reset scrolling state after animation
+      setTimeout(() => setIsScrolling(false), 500);
     }
   };
 
@@ -128,8 +147,9 @@ export default function ProductCarousel({ products, onAddToCart }) {
       {canScrollLeft && (
         <button
           onClick={() => scroll('left')}
+          disabled={isScrolling}
           aria-label="Scroll left"
-          className="absolute left-2 top-1/2 -translate-y-1/2 z-20 bg-white text-primary-600 shadow-lg p-2 rounded-full border border-neutral-200 transition-all duration-200 hover:bg-neutral-50 focus:outline-none focus:ring-2 focus:ring-primary-500"
+          className="absolute left-2 top-1/2 -translate-y-1/2 z-20 bg-white text-primary-600 shadow-lg p-2 rounded-full border border-neutral-200 transition-all duration-200 hover:bg-neutral-50 focus:outline-none focus:ring-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <ChevronLeft size={20} />
         </button>
@@ -139,8 +159,9 @@ export default function ProductCarousel({ products, onAddToCart }) {
       {canScrollRight && (
         <button
           onClick={() => scroll('right')}
+          disabled={isScrolling}
           aria-label="Scroll right"
-          className="absolute right-2 top-1/2 -translate-y-1/2 z-20 bg-white text-primary-600 shadow-lg p-2 rounded-full border border-neutral-200 transition-all duration-200 hover:bg-neutral-50 focus:outline-none focus:ring-2 focus:ring-primary-500"
+          className="absolute right-2 top-1/2 -translate-y-1/2 z-20 bg-white text-primary-600 shadow-lg p-2 rounded-full border border-neutral-200 transition-all duration-200 hover:bg-neutral-50 focus:outline-none focus:ring-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <ChevronRight size={20} />
         </button>

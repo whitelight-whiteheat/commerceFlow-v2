@@ -391,11 +391,11 @@ export default function AdminCustomers() {
                       <div>
                         <p className="text-neutral-600">Reviews</p>
                         <p className="font-medium">{selectedCustomer.reviewCount || 0}</p>
-                      </div>
+                          </div>
                       <div>
                         <p className="text-neutral-600">Member Since</p>
                         <p className="font-medium">{formatDate(selectedCustomer.createdAt)}</p>
-                      </div>
+                        </div>
                     </div>
                   </div>
                 </div>
