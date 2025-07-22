@@ -2,13 +2,28 @@ import { api } from './api';
 
 // Product API service
 export const productApi = {
-  // Get all products without pagination limits
-  getAllProducts: async () => {
+  // Get all products with pagination
+  getAllProducts: async (page = 1, limit = 10) => {
     try {
-      const response = await api.get('/products?limit=1000');
-      return Array.isArray(response.data) ? response.data : response.data.products || [];
+      console.log('🔍 Fetching products from:', api.defaults.baseURL);
+      const response = await api.get('/products', { 
+        params: { page, limit } 
+      });
+      console.log('✅ Products response:', response.data);
+      return response.data;
     } catch (error) {
-      console.error('Failed to fetch products:', error);
+      console.error('❌ Failed to fetch products:', error);
+      console.error('❌ Error details:', {
+        message: error.message,
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data,
+        config: {
+          url: error.config?.url,
+          method: error.config?.method,
+          baseURL: error.config?.baseURL
+        }
+      });
       throw error;
     }
   },

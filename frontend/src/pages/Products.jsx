@@ -17,6 +17,9 @@ export default function Products() {
   const [sortBy, setSortBy] = useState('name'); // 'name', 'price', 'rating'
   const [priceRange, setPriceRange] = useState([0, 1000]);
   const [showFilters, setShowFilters] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalProducts, setTotalProducts] = useState(0);
   const location = useLocation();
   const { addToCart } = useCartStore();
 
@@ -26,11 +29,14 @@ export default function Products() {
       try {
         setIsLoading(true);
         const [productsData, categoriesData] = await Promise.all([
-          productApi.getAllProducts(),
+          productApi.getAllProducts(currentPage, 10),
           productApi.getCategories()
         ]);
         
-        setProducts(Array.isArray(productsData) ? productsData : productsData.products || []);
+        setProducts(productsData.products || []);
+        setTotalPages(productsData.pagination?.pages || 1);
+        setTotalProducts(productsData.pagination?.total || 0);
+        
         const categoryArray = Array.isArray(categoriesData)
           ? categoriesData
           : categoriesData.categories;
@@ -44,7 +50,7 @@ export default function Products() {
     };
 
     fetchData();
-  }, []);
+  }, [currentPage]);
 
   // On mount, set category from query param if present
   useEffect(() => {
@@ -55,33 +61,8 @@ export default function Products() {
     }
   }, [location.search, categories]);
 
-  // Filter and sort products with deduplication
-  const filteredProducts = products
-    .filter((product, index, self) => {
-      // Remove duplicates by ID
-      const isDuplicate = self.findIndex(p => p.id === product.id) !== index;
-      if (isDuplicate) return false;
-      
-      // Apply other filters
-      const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesCategory = selectedCategory === 'All' || product.category?.name === selectedCategory;
-      const matchesPrice = product.price >= priceRange[0] && product.price <= priceRange[1];
-      return matchesSearch && matchesCategory && matchesPrice;
-    })
-    .sort((a, b) => {
-      switch (sortBy) {
-        case 'price':
-          return a.price - b.price;
-        case 'price-desc':
-          return b.price - a.price;
-        case 'rating':
-          return (b.averageRating || 0) - (a.averageRating || 0);
-        case 'newest':
-          return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
-        default:
-          return a.name.localeCompare(b.name);
-      }
-    });
+  // Use products directly since we're using server-side pagination
+  const filteredProducts = products;
 
   const handleAddToCart = (e, product) => {
     e.preventDefault();
@@ -272,7 +253,7 @@ export default function Products() {
         {/* Results count */}
         <div className="mb-6">
           <p className="text-neutral-600">
-            Showing {filteredProducts.length} of {products.length} products
+            Showing {filteredProducts.length} of {totalProducts} products (Page {currentPage} of {totalPages})
           </p>
         </div>
 
@@ -299,6 +280,46 @@ export default function Products() {
             </div>
             <h3 className="text-lg font-medium text-neutral-900 mb-2">No products found</h3>
             <p className="text-neutral-600">Try adjusting your search or filter criteria</p>
+          </div>
+        )}
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="mt-8 flex justify-center">
+            <nav className="flex items-center gap-2">
+              <button
+                onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                disabled={currentPage === 1}
+                className="px-3 py-2 text-sm font-medium text-neutral-500 bg-white border border-neutral-300 rounded-md hover:bg-neutral-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Previous
+              </button>
+              
+              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                const pageNum = i + 1;
+                return (
+                  <button
+                    key={pageNum}
+                    onClick={() => setCurrentPage(pageNum)}
+                    className={`px-3 py-2 text-sm font-medium rounded-md ${
+                      currentPage === pageNum
+                        ? 'bg-primary-600 text-white'
+                        : 'text-neutral-700 bg-white border border-neutral-300 hover:bg-neutral-50'
+                    }`}
+                  >
+                    {pageNum}
+                  </button>
+                );
+              })}
+              
+              <button
+                onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                disabled={currentPage === totalPages}
+                className="px-3 py-2 text-sm font-medium text-neutral-500 bg-white border border-neutral-300 rounded-md hover:bg-neutral-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Next
+              </button>
+            </nav>
           </div>
         )}
       </div>

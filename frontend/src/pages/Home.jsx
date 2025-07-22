@@ -79,13 +79,20 @@ export default function Home() {
 
 
 
-  // Fetch products on mount
+  // Fetch products on mount (fetch multiple pages for homepage sections)
   useEffect(() => {
     const fetchProducts = async () => {
       try {
         setIsLoading(true);
-        const productsData = await productApi.getAllProducts();
-        setProducts(Array.isArray(productsData) ? productsData : productsData.products || []);
+        // Fetch first 3 pages (30 products) to have enough for homepage sections
+        const promises = [];
+        for (let page = 1; page <= 3; page++) {
+          promises.push(productApi.getAllProducts(page, 10));
+        }
+        
+        const results = await Promise.all(promises);
+        const allProducts = results.flatMap(result => result.products || []);
+        setProducts(allProducts);
       } catch (error) {
         console.error('Failed to fetch products:', error);
         toast.error('Failed to load products. Please try again.');
